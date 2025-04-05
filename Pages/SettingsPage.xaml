@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CryptoTrader.Maui.Pages.SettingsPage"
+             Title="SettingsPage">
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="Settings" FontSize="28" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+
+            <!-- API Keys Section -->
+            <Frame CornerRadius="10" Padding="10" BackgroundColor="#1E1E1E">
+                <VerticalStackLayout>
+                    <Label Text="API Key" FontSize="18" TextColor="White"/>
+                    <Entry x:Name="ApiKeyEntry" Placeholder="Enter API Key" TextColor="White" BackgroundColor="#2D2D2D"/>
+                    <Label Text="Secret Key" FontSize="18" TextColor="White"/>
+                    <Entry x:Name="SecretKeyEntry" Placeholder="Enter Secret Key" IsPassword="True" TextColor="White" BackgroundColor="#2D2D2D"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Trading Configuration -->
+            <Frame CornerRadius="10" Padding="10" BackgroundColor="#1E1E1E">
+                <VerticalStackLayout>
+                    <Label Text="Trading Settings" FontSize="20" FontAttributes="Bold" TextColor="White"/>
+                    <Label Text="TDS Rate (%)" FontSize="18" TextColor="White"/>
+                    <Entry x:Name="TdsRateEntry" Placeholder="Enter TDS Rate" Keyboard="Numeric" TextColor="White" BackgroundColor="#2D2D2D"/>
+                    <Label Text="Trading Fee (%)" FontSize="18" TextColor="White"/>
+                    <Entry x:Name="TradingFeeEntry" Placeholder="Enter Trading Fee" Keyboard="Numeric" TextColor="White" BackgroundColor="#2D2D2D"/>
+                    <Label Text="Default Exchange" FontSize="18" TextColor="White"/>
+                    <Entry x:Name="ExchangeEntry" Placeholder="Enter Exchange" TextColor="White" BackgroundColor="#2D2D2D"/>
+                    <Label Text="Default Trading Pair" FontSize="18" TextColor="White"/>
+                    <Entry x:Name="TradingPairEntry" Placeholder="Enter Trading Pair" TextColor="White" BackgroundColor="#2D2D2D"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Scalping Configuration -->
+            <Frame CornerRadius="10" Padding="10" BackgroundColor="#1E1E1E">
+                <VerticalStackLayout>
+                    <Label Text="Scalping Settings" FontSize="20" FontAttributes="Bold" TextColor="White"/>
+                    <HorizontalStackLayout>
+                        <Label Text="Enable Scalping" FontSize="18" TextColor="White"/>
+                        <Switch x:Name="ScalpingToggle" IsToggled="False" ThumbColor="White" OnColor="Blue"/>
+                    </HorizontalStackLayout>
+                    <Label Text="Default Scalping Pair" FontSize="18" TextColor="White"/>
+                    <Entry x:Name="ScalpingPairEntry" Placeholder="Enter Scalping Pair" TextColor="White" BackgroundColor="#2D2D2D"/>
+                    <Label Text="Scalping Profit Threshold (%)" FontSize="18" TextColor="White"/>
+                    <Entry x:Name="ScalpingProfitThresholdEntry" Placeholder="Enter Profit Threshold" Keyboard="Numeric" TextColor="White" BackgroundColor="#2D2D2D"/>
+                    <Label Text="Max Trade Size" FontSize="18" TextColor="White"/>
+                    <Entry x:Name="ScalpingMaxTradeSizeEntry" Placeholder="Enter Max Trade Size" Keyboard="Numeric" TextColor="White" BackgroundColor="#2D2D2D"/>
+                    <Label Text="Bid Postion" FontSize="18" TextColor="White"/>
+                    <Entry x:Name="BidPosition" Placeholder="Enter Bid Position" Keyboard="Numeric" TextColor="White" BackgroundColor="#2D2D2D"/>
+                    <Label Text="Ask Position" FontSize="18" TextColor="White"/>
+                    <Entry x:Name="AskPosition" Placeholder="Enter Ask Position" Keyboard="Numeric" TextColor="White" BackgroundColor="#2D2D2D"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Save Button -->
+            <Button Text="Save Settings" Clicked="OnSaveClicked" BackgroundColor="Gray" TextColor="White" CornerRadius="10" FontSize="18"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

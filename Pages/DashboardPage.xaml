@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CryptoTrader.Maui.Pages.DashboardPage"
+             Title="DashboardPage">
+    <ScrollView>
+        <VerticalStackLayout Padding="20">
+            <Label Text="Portfolio Summary" FontSize="24" FontAttributes="Bold"/>
+            <Label Text="Total Balance: ₹0   ---- Hamza New" x:Name="BalanceLabel" FontSize="18"/>
+
+            <Label Text="Live Market Data" FontSize="20" FontAttributes="Bold" Margin="0,20,0,5"/>
+            <ListView x:Name="MarketListView" HeightRequest="200">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <StackLayout Orientation="Horizontal" Padding="10">
+                                <Label Text="{Binding Symbol}" FontSize="16"/>
+                                <Label Text="{Binding Price}" FontSize="16" HorizontalOptions="EndAndExpand"/>
+                            </StackLayout>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <Button Text="Refresh Data" Clicked="OnRefreshClicked"/>
+            <Button Text="Start Trading Service" Clicked="OnStartServiceClicked" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

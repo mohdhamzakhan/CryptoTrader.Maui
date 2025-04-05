@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CryptoTrader.Maui.Pages.TradingPage"
+             Title="TradingPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+
+            <!-- Page Title -->
+            <Label Text="Crypto Trading"
+                   FontSize="28"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   TextColor="White"/>
+
+            <!-- Order Placement Section -->
+            <Frame CornerRadius="10" Padding="15" BackgroundColor="#1E1E1E">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Place Order" FontSize="20" FontAttributes="Bold" TextColor="White"/>
+
+                    <Entry x:Name="SymbolEntry" 
+                           Placeholder="Symbol (e.g., BTC/INR)" 
+                           TextColor="White" 
+                           BackgroundColor="#2D2D2D"/>
+
+                    <Entry x:Name="ExchangeEntry" 
+                           Placeholder="Exchange (e.g., COINSWITCHX)" 
+                           TextColor="White" 
+                           BackgroundColor="#2D2D2D"/>
+
+                    <Entry x:Name="PriceEntry" 
+                           Placeholder="Price" 
+                           Keyboard="Numeric" 
+                           TextColor="White" 
+                           BackgroundColor="#2D2D2D"/>
+
+                    <Entry x:Name="QuantityEntry" 
+                           Placeholder="Quantity" 
+                           Keyboard="Numeric" 
+                           TextColor="White" 
+                           BackgroundColor="#2D2D2D"/>
+
+                    <HorizontalStackLayout Spacing="10">
+                        <Button Text="Buy"
+                                Clicked="PlaceBuyOrderClicked"
+                                BackgroundColor="Green"
+                                TextColor="White"
+                                CornerRadius="10"/>
+
+                        <Button Text="Sell"
+                                Clicked="PlaceSellOrderClicked"
+                                BackgroundColor="Red"
+                                TextColor="White"
+                                CornerRadius="10"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Scalping Section -->
+            <Frame CornerRadius="10" Padding="15" BackgroundColor="#1E1E1E">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Scalping Settings" FontSize="20" FontAttributes="Bold" TextColor="White"/>
+
+                    <Switch x:Name="ScalpingToggle"
+                            IsToggled="False"
+                            ThumbColor="White"
+                            OnColor="Blue"/>
+                    <Picker x:Name="StrategyPicker"
+        Title="Select Trading Strategy"
+        ItemsSource="{Binding TradingStrategies}"
+        SelectedItem="{Binding SelectedStrategy}"
+        BackgroundColor="White"
+        TextColor="Black"/>
+
+
+                    <Button Text="Start Scalping"
+                            Clicked="StartScalpingClicked"
+                            BackgroundColor="Blue"
+                            
+                            TextColor="White"
+                            CornerRadius="10"/>
+
+                    <Button Text="Start Trading"
+        Clicked="StartTradingClicked"
+                            x:Name="btnTrading"
+        BackgroundColor="Green"
+        TextColor="White"
+        CornerRadius="10"/>
+                    <Button Text="Start Trading"
+Clicked="StartNewTradingClicked"
+                    x:Name="btnNewTrading"
+BackgroundColor="Green"
+TextColor="White"
+CornerRadius="10"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Trading Fee & TDS Configuration -->
+            <Frame CornerRadius="10" Padding="15" BackgroundColor="#1E1E1E">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Trading Fee TDS" FontSize="20" FontAttributes="Bold" TextColor="White"/>
+
+                    <Entry x:Name="TdsRateEntry" 
+                           Placeholder="TDS Rate (%)" 
+                           Keyboard="Numeric" 
+                           TextColor="White" 
+                           BackgroundColor="#2D2D2D"/>
+
+                    <Entry x:Name="TradingFeeEntry" 
+                           Placeholder="Trading Fee (%)" 
+                           Keyboard="Numeric" 
+                           TextColor="White" 
+                           BackgroundColor="#2D2D2D"/>
+
+                    <Button Text="Save Settings"
+                            Clicked="SaveSettingsClicked"
+                            BackgroundColor="Gray"
+                            TextColor="White"
+                            CornerRadius="10"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Order Log -->
+            <Frame CornerRadius="10" Padding="15" BackgroundColor="#1E1E1E">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Order Logs" FontSize="20" FontAttributes="Bold" TextColor="White"/>
+
+                    <ListView x:Name="OrderListView"
+                              BackgroundColor="#1E1E1E"
+                              HeightRequest="200">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <TextCell Text="{Binding .}" TextColor="White"/>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,46 @@
+<Shell
+    x:Class="CryptoTrader.Maui.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:pages="clr-namespace:CryptoTrader.Maui.Pages"
+    Shell.FlyoutBehavior="Flyout"
+    Title="Crypto Trading App">
+
+    <!-- Set Dashboard as the Main Page -->
+
+    <ShellContent
+        Title="Dashboard"
+        ContentTemplate="{DataTemplate pages:DashboardPage}"
+        Route="DashboardPage" />
+
+    <!-- Trading Page -->
+    <ShellContent
+        Title="Trading"
+        ContentTemplate="{DataTemplate pages:TradingPage}"
+        Route="TradingPage" />
+
+    <!-- Scalping Page -->
+    <ShellContent
+        Title="Scalping"
+        ContentTemplate="{DataTemplate pages:ScalpingPage}"
+        Route="ScalpingPage" />
+
+    <!-- Analytics -->
+    <ShellContent
+        Title="Analytics"
+        ContentTemplate="{DataTemplate pages:AnalyticsPage}"
+        Route="AnalyticsPage" />
+
+    <!-- Settings -->
+    <ShellContent
+        Title="Settings"
+        ContentTemplate="{DataTemplate pages:SettingsPage}"
+        Route="SettingsPage" />
+
+    <!--<ShellContent
+        Title="Trade"
+        ContentTemplate="{DataTemplate pages:OrdersPage}"
+        Route="OrderPage"/>-->
+
+
+</Shell>
