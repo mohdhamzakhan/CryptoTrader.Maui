@@ -61,8 +61,8 @@ namespace CryptoTrader.Maui.Platforms.Android
                 var exchangePairs = settingsService.DefaultExchange.Split(',')
                                       .Select(s => s.Trim()).ToList();
 
-                var strategy1 = new TrendFollowService(tradingService, settingsService);
-                var strategy2 = new NewTrendFollowService(tradingService, settingsService);
+                var strategy1 = new TrendFollowService(tradingService, settingsService, _historicalDataService);
+                var strategy2 = new NewTrendFollowService(tradingService, settingsService, _historicalDataService);
                 var strategy3 = new ScalpingService(tradingService, settingsService, historicalDataService);
 
                 strategy1.StartTrading(tradingPairs, exchangePairs);

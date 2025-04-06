@@ -11,15 +11,17 @@ namespace CoinswitchTrader.Services
     {
         private readonly TradingService _tradingService;
         private readonly SettingsService _settingsService;
+        private readonly HistoricalDataService _historicalDataService;
         private Dictionary<string, List<decimal>> _priceHistory = new();
         private Dictionary<string, List<string>> _openOrders = new();
         private bool _isRunning = false;
         private CancellationTokenSource _cancellationTokenSource;
 
-        public TrendFollowService(TradingService tradingService, SettingsService settingsService)
+        public TrendFollowService(TradingService tradingService, SettingsService settingsService, HistoricalDataService historicalDataService)
         {
             _tradingService = tradingService;
             _settingsService = settingsService;
+            _historicalDataService = historicalDataService;
         }
 
         public void StartTrading(List<string> symbols, List<string> exchanges, int scanIntervalMs = 2000)
@@ -47,6 +49,9 @@ namespace CoinswitchTrader.Services
 
                                 if (!_openOrders.ContainsKey(key))
                                     _openOrders[key] = new List<string>();
+
+                                var historicalData = await _historicalDataService.GetHistoricalDataAsync(symbol, exchange, timeframe: "1");
+                                if (historicalData == null || historicalData.Count() < 20) return;
 
                                 var depthResponse = await _tradingService.GetMarketDepthAsync(symbol, exchange);
                                 if (depthResponse == null) continue;
@@ -102,10 +107,15 @@ namespace CoinswitchTrader.Services
 
                                 // Calculate indicators
                                 var priceData = _priceHistory[key];
-                                decimal sma = CalculateSMA(priceData, _settingsService.SMA_Period);
-                                decimal ema = CalculateEMA(priceData, _settingsService.EMA_Period);
-                                decimal rsi = CalculateRSI(priceData, _settingsService.RSI_Period);
-                                (decimal macd, decimal signal) = CalculateMACD(priceData, _settingsService.MACD_ShortPeriod, _settingsService.MACD_LongPeriod, _settingsService.MACD_SignalPeriod);
+                                //decimal sma = CalculateSMA(priceData, _settingsService.SMA_Period);
+                                //decimal ema = CalculateEMA(priceData, _settingsService.EMA_Period);
+                                //decimal rsi = CalculateRSI(priceData, _settingsService.RSI_Period);
+                                //(decimal macd, decimal signal) = CalculateMACD(priceData, _settingsService.MACD_ShortPeriod, _settingsService.MACD_LongPeriod, _settingsService.MACD_SignalPeriod);
+
+                                decimal sma = historicalData.Select(c => c.Sma ?? 0m).Take(_settingsService.SMA_Period).FirstOrDefault();
+                                decimal ema = historicalData.Select(c => c.EMA12 ?? 0m).Take(_settingsService.EMA_Period).FirstOrDefault();
+                                decimal rsi = historicalData.Select(c => c.Rsi ?? 0m).Take(_settingsService.RSI_Period).FirstOrDefault();
+                                (decimal macd, decimal signal) = historicalData.Select(c => (c.Macd ?? 0m, c.MacdSignal ?? 0m)).Take(_settingsService.MACD_ShortPeriod).FirstOrDefault();
 
                                 // Calculate trend strength
                                 decimal trendStrength = Math.Abs(ema - sma) / sma * 100;
@@ -129,7 +139,7 @@ namespace CoinswitchTrader.Services
 
                                     foreach (var bid in bids.Take(3)) // Buy at top 3 bid levels
                                     {
-                                        decimal bidPrice = ConvertToDecimal(bid[_settingsService.BidPosition].ToString());
+                                        decimal bidPrice = ConvertToDecimal(bid[0].ToString());
                                         decimal quantity = (maxTradeSize  / bidPrice); // Divide by 3 to place equal orders
 
                                         if (quantity * bidPrice >= 150) // Ensure minimum order size
@@ -150,7 +160,7 @@ namespace CoinswitchTrader.Services
                                     
                                     foreach (var ask in asks.Take(3)) // Sell at top 3 ask levels
                                     {
-                                        decimal askPrice = ConvertToDecimal(ask[_settingsService.AskPosition].ToString());
+                                        decimal askPrice = ConvertToDecimal(ask[0].ToString());
                                         if (perOrderBalance * askPrice >= 150) // Ensure minimum order size
                                         {
                                             var order = await _tradingService.CreateSellOrderAsync(symbol, exchange, askPrice, perOrderBalance);

@@ -45,6 +45,8 @@ namespace CoinswitchTrader.Services
         private TradingStrategy _selectedStrategy;
         public int SMA_Period { get; set; } = 14;  // Common periods: 10, 14, 20, 50, 200
         public int EMA_Period { get; set; } = 14;  // Common periods: 10, 14, 20, 50
+
+        public int Long_EMA_Period { get; set; } = 26;  // Common periods: 10, 14, 20, 50
         public int RSI_Period { get; set; } = 14;  // Default RSI period: 14
         public int MACD_ShortPeriod { get; set; } = 12;  // Standard MACD short period
         public int MACD_LongPeriod { get; set; } = 26;   // Standard MACD long period

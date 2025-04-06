@@ -18,7 +18,7 @@ public partial class ScalpingPage : ContentPage
         string apiKey = _settingsService.ApiKey;
         string secretKey = _settingsService.SecretKey;
         _tradeService =new TradingService(apiKey, secretKey,_settingsService);
-        _historicalDataService = new HistoricalDataService(_tradeService);
+        _historicalDataService = new HistoricalDataService(_tradeService, _settingsService);
 
         // Create TradingService with stored keys
         var tradingService = new TradingService(secretKey, apiKey, _settingsService);

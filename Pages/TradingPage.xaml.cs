@@ -23,10 +23,10 @@ public partial class TradingPage : ContentPage
         string apiKey = _settingsService.ApiKey;
         string secretKey = _settingsService.SecretKey;
         _tradingService = new TradingService(secretKey, apiKey, _settingsService);
-        _historicalDataService = new HistoricalDataService(_tradingService);
+        _historicalDataService = new HistoricalDataService(_tradingService, _settingsService);
         OrderLogs = new ObservableCollection<string>();
         OrderListView.ItemsSource = OrderLogs;
-        _trendFollowService = new TrendFollowService(_tradingService, _settingsService);
+        _trendFollowService = new TrendFollowService(_tradingService, _settingsService, _historicalDataService);
 
         // Populate the TradingStrategy dropdown
         TradingStrategies = Enum.GetValues(typeof(TradingStrategy)).Cast<TradingStrategy>().ToList();
@@ -104,7 +104,7 @@ public partial class TradingPage : ContentPage
 
     private void StartTradingClicked(object sender, EventArgs e)
     {
-        var trendFollow = new TrendFollowService(_tradingService, _settingsService);
+        var trendFollow = new TrendFollowService(_tradingService, _settingsService, _historicalDataService);
         if (btnTrading.Text == "Start Trading")
         {
             List<string> tradingPair = _settingsService.ScalpingSymbols.Split(',')
@@ -122,7 +122,7 @@ public partial class TradingPage : ContentPage
 
     private void StartNewTradingClicked(object sender, EventArgs e)
     {
-        var trendFollow = new NewTrendFollowService(_tradingService, _settingsService);
+        var trendFollow = new NewTrendFollowService(_tradingService, _settingsService, _historicalDataService);
         if (btnNewTrading.Text == "Start Trading")
         {
             List<string> tradingPair = _settingsService.ScalpingSymbols.Split(',')
