@@ -50,6 +50,10 @@
                     <Entry x:Name="BidPosition" Placeholder="Enter Bid Position" Keyboard="Numeric" TextColor="White" BackgroundColor="#2D2D2D"/>
                     <Label Text="Ask Position" FontSize="18" TextColor="White"/>
                     <Entry x:Name="AskPosition" Placeholder="Enter Ask Position" Keyboard="Numeric" TextColor="White" BackgroundColor="#2D2D2D"/>
+                    <HorizontalStackLayout>
+                        <Label Text="Enable Logging" FontSize="18" TextColor="White"/>
+                        <Switch x:Name="LoggingToggle" IsToggled="False" ThumbColor="White" OnColor="Blue"/>
+                    </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Frame>
 

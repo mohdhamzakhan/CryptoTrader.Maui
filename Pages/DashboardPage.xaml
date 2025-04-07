@@ -24,6 +24,19 @@
 
             <Button Text="Refresh Data" Clicked="OnRefreshClicked"/>
             <Button Text="Start Trading Service" Clicked="OnStartServiceClicked" />
+            <Button Text="Download Log"
+        Clicked="OnDownloadLogClicked"
+        BackgroundColor="DarkBlue"
+        TextColor="White"
+        Padding="10"
+        Margin="20"/>
+
+            <Button Text="Download Log"
+Clicked="OnDeleteLogClicked"
+BackgroundColor="Red"
+TextColor="White"
+Padding="10"
+Margin="20"/>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

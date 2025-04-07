@@ -16,6 +16,7 @@ namespace CoinswitchTrader.Services
         private const decimal DEFAULT_SCALPING_MAX_TRADE_SIZE = 1000m; // ₹1000
         private const int DEFAULT_BID = 0;
         private const int DEFAULT_ASK = 1;
+        private const bool DEFAULT_LOGGING_ENABLED = false;
 
         // Keys for settings storage
         private const string TDS_RATE_KEY = "TdsRate";
@@ -29,8 +30,9 @@ namespace CoinswitchTrader.Services
         private const string SCALPING_PROFIT_THRESHOLD = "ScalpingProfitThreshold";
         private const string SCALPING_MAX_TRADE_SIZE = "ScalpingMaxTradeSize";
         private const string SCALPING_TRADING_PAIR = "BTC,ETH";
-        private const string DEFAULT_BID_KEY = "0";
+        private const string DEFAULT_BID_KEY = "1";
         private const string DEFAULT_ASK_KEY = "1";
+        private const string LOGGING_ENABLED = "true";
 
 
         public int StochasticKPeriod { get; set; } = 14;
@@ -43,15 +45,15 @@ namespace CoinswitchTrader.Services
         new ObservableCollection<TradingStrategy>(Enum.GetValues(typeof(TradingStrategy)).Cast<TradingStrategy>());
 
         private TradingStrategy _selectedStrategy;
-        public int SMA_Period { get; set; } = 14;  // Common periods: 10, 14, 20, 50, 200
-        public int EMA_Period { get; set; } = 14;  // Common periods: 10, 14, 20, 50
+        public int _SMA_Period { get; set; } = 14;  // Common periods: 10, 14, 20, 50, 200
+        public int _EMA_Period { get; set; } = 14;  // Common periods: 10, 14, 20, 50
 
-        public int Long_EMA_Period { get; set; } = 26;  // Common periods: 10, 14, 20, 50
-        public int RSI_Period { get; set; } = 14;  // Default RSI period: 14
-        public int MACD_ShortPeriod { get; set; } = 12;  // Standard MACD short period
-        public int MACD_LongPeriod { get; set; } = 26;   // Standard MACD long period
-        public int MACD_SignalPeriod { get; set; } = 9;  // Standard MACD signal period
-
+        public int _Long_EMA_Period { get; set; } = 26;  // Common periods: 10, 14, 20, 50
+        public int _RSI_Period { get; set; } = 14;  // Default RSI period: 14
+        public int _MACD_ShortPeriod { get; set; } = 12;  // Standard MACD short period
+        public int _MACD_LongPeriod { get; set; } = 26;   // Standard MACD long period
+        public int _MACD_SignalPeriod { get; set; } = 9;  // Standard MACD signal period
+        
 
 
         public SettingsService()
@@ -80,6 +82,9 @@ namespace CoinswitchTrader.Services
             if (!Preferences.ContainsKey(SCALPING_ENABLED))
                 Preferences.Set(SCALPING_ENABLED, false);
 
+            if (!Preferences.ContainsKey(LOGGING_ENABLED))
+                Preferences.Set(LOGGING_ENABLED, false);
+
             if (!Preferences.ContainsKey(SCALPING_PROFIT_THRESHOLD))
                 Preferences.Set(SCALPING_PROFIT_THRESHOLD, "0.005"); // 0.5%
 
@@ -97,6 +102,54 @@ namespace CoinswitchTrader.Services
 
             if (!Preferences.ContainsKey(SCALPING_TRADING_PAIR))
                 Preferences.Set(SCALPING_TRADING_PAIR, "BTC,ETH");
+
+            if (!Preferences.ContainsKey(DEFAULT_BID_KEY))
+                Preferences.Set(DEFAULT_BID_KEY, "1");
+
+            if (!Preferences.ContainsKey(DEFAULT_ASK_KEY))
+                Preferences.Set(DEFAULT_ASK_KEY, "1");
+        }
+
+        public int SMA_Period
+        {
+            get { return _SMA_Period; }
+            set { _SMA_Period = value; }
+        }
+
+        public int EMA_Period
+        {
+            get { return _EMA_Period; }
+            set { _EMA_Period = value; }
+        }
+
+        public int Long_EMA_Period
+        {
+            get { return _Long_EMA_Period; }
+            set { _Long_EMA_Period = value; }
+        }
+
+        public int RSI_Period
+        {
+            get { return _RSI_Period; }
+            set { _RSI_Period = value; }
+        }
+
+        public int MACD_ShortPeriod
+        {
+            get { return _MACD_ShortPeriod; }
+            set { _MACD_ShortPeriod = value; }
+        }
+
+        public int MACD_LongPeriod
+        {
+            get { return _MACD_LongPeriod; }
+            set { _MACD_LongPeriod = value; }
+        }
+
+        public int MACD_SignalPeriod
+        {
+            get { return _MACD_SignalPeriod; }
+            set { _MACD_SignalPeriod = value; }
         }
         public int BidPosition
         {
@@ -181,6 +234,13 @@ namespace CoinswitchTrader.Services
             set => Preferences.Set(SCALPING_ENABLED, value);
         }
 
+        public bool LoggingEnabled
+        {
+            get => Preferences.Get(LOGGING_ENABLED, false);
+            set => Preferences.Set(LOGGING_ENABLED, value);
+        }
+
+
         public decimal ScalpingProfitThreshold
         {
             get
@@ -208,7 +268,7 @@ namespace CoinswitchTrader.Services
                 string value = Preferences.Get(SCALPING_TRADING_PAIR, "BTC,ETH");
                 return value;
             }
-            set => Preferences.Set(SCALPING_TRADING_PAIR,value.ToString());
+            set => Preferences.Set(SCALPING_TRADING_PAIR, value.ToString());
         }
 
         public TradingStrategy ActiveStrategy

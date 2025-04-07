@@ -115,7 +115,7 @@ namespace CoinswitchTrader.Services
                                         _priceHistory[key] = _priceHistory[key].TakeLast(_settingsService.SMA_Period * 3).ToList();
                                 }
 
-                                if (_priceHistory[key].Count < _settingsService.SMA_Period) continue;
+                                //if (_priceHistory[key].Count < _settingsService.SMA_Period) continue;
 
                                 // Calculate indicators
                                 var priceData = _priceHistory[key];
@@ -124,10 +124,10 @@ namespace CoinswitchTrader.Services
                                 //decimal rsi = CalculateRSI(priceData, _settingsService.RSI_Period);
                                 //(decimal macd, decimal signal) = CalculateMACD(priceData, _settingsService.MACD_ShortPeriod, _settingsService.MACD_LongPeriod, _settingsService.MACD_SignalPeriod);
 
-                                decimal sma = historicalData.Select(c => c.Sma ?? 0m).Take(_settingsService.SMA_Period).FirstOrDefault();
-                                decimal ema = historicalData.Select(c => c.EMA12 ?? 0m).Take(_settingsService.EMA_Period).FirstOrDefault();
-                                decimal rsi = historicalData.Select(c => c.Rsi ?? 0m).Take(_settingsService.RSI_Period).FirstOrDefault();
-                                (decimal macd, decimal signal) = historicalData.Select(c => (c.Macd ?? 0m, c.MacdSignal ?? 0m)).Take(_settingsService.MACD_ShortPeriod).FirstOrDefault();
+                                decimal sma = historicalData.Select(c => c.Sma ?? 0m).Skip(_settingsService.SMA_Period).LastOrDefault();
+                                decimal ema = historicalData.Select(c => c.EMA12 ?? 0m).Skip(_settingsService.EMA_Period).LastOrDefault();
+                                decimal rsi = historicalData.Select(c => c.Rsi ?? 0m).Skip(_settingsService.RSI_Period).LastOrDefault();
+                                (decimal macd, decimal signal) = historicalData.Select(c => (c.Macd ?? 0m, c.MacdSignal ?? 0m)).Skip(_settingsService.MACD_ShortPeriod).LastOrDefault();
 
 
                                 // Calculate trend strength
@@ -217,7 +217,7 @@ namespace CoinswitchTrader.Services
                                     int bidLevels = 3; // Default
                                     if (highVolatility) bidLevels = 5; // More levels in high volatility
 
-                                    foreach (var bid in bids.Take(bidLevels))
+                                    foreach (var bid in bids.Skip(_settingsService.BidPosition).Take(bidLevels))
                                     {
                                         decimal bidPrice = ConvertToDecimal(bid[0].ToString());
                                         decimal quantity = (maxTradeSize / bidPrice);
@@ -251,7 +251,7 @@ namespace CoinswitchTrader.Services
 
                                     decimal perOrderBalance = assetBalance / askLevels;
 
-                                    foreach (var ask in asks.Take(askLevels))
+                                    foreach (var ask in asks.Skip(_settingsService.AskPosition).Take(askLevels))
                                     {
                                         decimal askPrice = ConvertToDecimal(ask[0].ToString());
                                         if (perOrderBalance * askPrice >= 150) // Ensure minimum order size
@@ -412,110 +412,6 @@ namespace CoinswitchTrader.Services
 
         private decimal ConvertToDecimal(string price) => decimal.Parse(price);
 
-        private decimal CalculateSMA(List<decimal> priceData, int period) => priceData.TakeLast(period).Average();
-
-        private decimal CalculateEMA(List<decimal> priceData, int period)
-        {
-            if (priceData.Count <= period)
-                return priceData.Average();
-
-            // Take the most recent data for calculation
-            var data = priceData.TakeLast(period * 2).ToList();
-
-            decimal k = 2m / (period + 1);
-            decimal ema = data.Take(period).Average(); // Initial EMA is SMA of first 'period' elements
-
-            for (int i = period; i < data.Count; i++)
-            {
-                ema = data[i] * k + ema * (1 - k);
-            }
-
-            return ema;
-        }
-
-        private decimal CalculateRSI(List<decimal> priceData, int period)
-        {
-            if (priceData.Count < period + 1)
-                return 50; // Neutral RSI if insufficient data
-
-            // We need the most recent data for RSI
-            var relevantData = priceData.TakeLast(period * 2).ToList();
-
-            List<decimal> changes = new List<decimal>();
-            for (int i = 1; i < relevantData.Count; i++)
-            {
-                changes.Add(relevantData[i] - relevantData[i - 1]);
-            }
-
-            // Calculate initial averages
-            decimal avgGain = changes.Take(period).Where(change => change > 0).DefaultIfEmpty(0).Average();
-            decimal avgLoss = changes.Take(period).Where(change => change < 0).Select(change => Math.Abs(change)).DefaultIfEmpty(0).Average();
-
-            // Apply Wilder's smoothing
-            for (int i = period; i < changes.Count; i++)
-            {
-                decimal change = changes[i];
-                decimal currentGain = change > 0 ? change : 0;
-                decimal currentLoss = change < 0 ? Math.Abs(change) : 0;
-
-                avgGain = ((avgGain * (period - 1)) + currentGain) / period;
-                avgLoss = ((avgLoss * (period - 1)) + currentLoss) / period;
-            }
-
-            if (avgLoss == 0)
-                return 100; // No losses, RSI is 100
-
-            decimal rs = avgGain / avgLoss;
-            decimal rsi = 100 - (100 / (1 + rs));
-
-            return Math.Round(rsi, 2);
-        }
-
-        private (decimal, decimal) CalculateMACD(List<decimal> priceData, int shortPeriod, int longPeriod, int signalPeriod)
-        {
-            if (priceData.Count < Math.Max(shortPeriod, longPeriod) + signalPeriod)
-                return (0, 0);
-
-            // Use the most recent data
-            var data = priceData.TakeLast(Math.Max(shortPeriod, longPeriod) * 2 + signalPeriod).ToList();
-
-            // Calculate MACD line values for the recent period
-            List<decimal> macdValues = new List<decimal>();
-
-            for (int i = 0; i <= signalPeriod + 5; i++) // Additional points for better signal line
-            {
-                if (data.Count - i < Math.Max(shortPeriod, longPeriod)) break;
-
-                var subset = data.Take(data.Count - i).ToList();
-                decimal shortEMA = CalculateEMA(subset, shortPeriod);
-                decimal longEMA = CalculateEMA(subset, longPeriod);
-                macdValues.Insert(0, shortEMA - longEMA); // Insert at beginning to maintain chronological order
-            }
-
-            // The current MACD value is the first/last one
-            decimal macd = macdValues.LastOrDefault();
-
-            // Calculate signal line (EMA of MACD values)
-            decimal signal;
-            if (macdValues.Count >= signalPeriod)
-            {
-                // Simple EMA calculation on MACD values
-                decimal k = 2m / (signalPeriod + 1);
-                signal = macdValues.Take(signalPeriod).Average();
-
-                for (int i = signalPeriod; i < macdValues.Count; i++)
-                {
-                    signal = macdValues[i] * k + signal * (1 - k);
-                }
-            }
-            else
-            {
-                // Not enough data for proper signal line
-                signal = macdValues.Average();
-            }
-
-            return (macd, signal);
-        }
 
         // Calculate price volatility
         private decimal CalculateVolatility(List<decimal> priceData, int period)

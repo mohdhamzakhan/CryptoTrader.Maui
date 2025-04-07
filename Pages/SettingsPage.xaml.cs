@@ -33,6 +33,7 @@ public partial class SettingsPage : ContentPage
         ScalpingPairEntry.Text = _settingsService.ScalpingSymbols.ToString();
         BidPosition.Text = _settingsService.BidPosition.ToString();
         AskPosition.Text = _settingsService.AskPosition.ToString();
+        LoggingToggle.IsToggled = (_settingsService.LoggingEnabled);
     }
 
     private async void OnSaveClicked(object sender, EventArgs e)
@@ -49,6 +50,7 @@ public partial class SettingsPage : ContentPage
             _settingsService.ScalpingProfitThreshold = decimal.Parse(ScalpingProfitThresholdEntry.Text);
             _settingsService.ScalpingMaxTradeSize = decimal.Parse(ScalpingMaxTradeSizeEntry.Text);
             _settingsService.ScalpingSymbols = ScalpingPairEntry.Text;
+            _settingsService.LoggingEnabled = LoggingToggle.IsToggled;
 
             await DisplayAlert("Success", "Settings saved successfully!", "OK");
         }

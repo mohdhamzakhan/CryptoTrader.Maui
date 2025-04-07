@@ -15,6 +15,17 @@ public partial class DashboardPage : ContentPage
     {
         await DisplayAlert("Refresh", "Market data refreshed!", "OK");
     }
+
+    private async void OnDownloadLogClicked(object sender, EventArgs e)
+    {
+        await Logger.ShareLogFileAsync();
+    }
+
+    private void OnDeleteLogClicked(object sender, EventArgs e)
+    {
+        Logger.Delete();
+    }
+
     private void OnStartServiceClicked(object sender, EventArgs e)
     {
 #if ANDROID

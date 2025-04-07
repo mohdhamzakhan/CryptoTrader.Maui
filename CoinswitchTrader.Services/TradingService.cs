@@ -8,7 +8,7 @@ namespace CoinswitchTrader.Services
         private readonly ApiTradingClient _apiClient;
         private readonly SettingsService _settingsService;
 
-        public TradingService(string secretKey, string apiKey, SettingsService settingsService)
+        public TradingService([FromKeyedServices("secretKey")] string secretKey, [FromKeyedServices("apiKey")] string apiKey, SettingsService settingsService)
          {
             _settingsService = settingsService;
             _apiClient = new ApiTradingClient(secretKey,apiKey);
