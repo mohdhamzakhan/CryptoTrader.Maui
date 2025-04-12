@@ -1,4 +1,5 @@
 ﻿using CoinswitchTrader.Services;
+using CryptoTrader.Maui.CoinswitchTrader.Services;
 using CryptoTrader.Maui.Model;
 using CryptoTrader.Maui.ViewModels;
 using Newtonsoft.Json.Linq;
@@ -12,6 +13,10 @@ public partial class DashboardPage : ContentPage
     private ObservableCollection<Model.MarketData> _marketDataList = new();
     private ObservableCollection<OrderData> _openOrdersList = new();
     private System.Timers.Timer _refreshTimer;
+
+    private readonly TradingService _tradingService;
+    private readonly SettingsService _settingsService;
+    private readonly DashboardServices _dashboardService;
     public DashboardPage()
     {
         InitializeComponent();
@@ -19,6 +24,9 @@ public partial class DashboardPage : ContentPage
         OpenOrdersListView.ItemsSource = _openOrdersList;
 
         StartAutoRefresh();
+        _settingsService = new SettingsService();
+        _tradingService = new TradingService(_settingsService.SecretKey, _settingsService.ApiKey, _settingsService);
+        _dashboardService = new DashboardServices(_tradingService, _settingsService);
     }
     private void StartAutoRefresh()
     {
@@ -74,11 +82,19 @@ public partial class DashboardPage : ContentPage
             // TODO: Call your live market API here and parse the response
             // For now, returning dummy data
             await Task.Delay(500); // simulate network delay
-            return new List<Model.MarketData>
+
+            List<string> tradingPair = _settingsService.ScalpingSymbols.Split(',')
+                                     .Select(s => s.Trim() + "/INR")
+                                     .ToList();
+            var data = await _dashboardService.GetMarketDataAsync(tradingPair, new List<string> { "COINSWITCHX" });
+
+            return data.Select(item => new Model.MarketData
             {
-                new Model.MarketData { Symbol = "BTC/INR", Ask = 4444 },
-                new Model.MarketData { Symbol = "ETH/INR", Bid = 3333 }
-            };
+                Symbol = $"{item.Symbol}/INR",
+                Bid = item.Bid,
+                Ask = item.Ask
+            }).ToList();
+
         }
         catch (Exception ex)
         {
