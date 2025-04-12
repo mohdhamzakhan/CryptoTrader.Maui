@@ -291,9 +291,9 @@ namespace CoinswitchTrader.Services
             return MakeRequestAsync("DELETE", "/trade/api/v2/order", payload);
         }
 
-        public Task<string> GetOpenOrdersAsync(Dictionary<string, string> paramsDict = null)
+        public Task<string> GetOpenOrdersAsync(Dictionary<string, object> paramsDict = null)
         {
-            return MakeRequestAsync("GET", "/trade/api/v2/orders", null, paramsDict);
+            return MakeRequestObjectAsync("GET", "/trade/api/v2/orders", null, paramsDict);
         }
 
         public Task<string> GetClosedOrdersAsync(Dictionary<string, object> paramsDict = null)
@@ -760,7 +760,7 @@ namespace CoinswitchTrader.Services
 
         public async Task<JObject> FetchMarketData(string side, string coin)
         {
-            var parameters = new Dictionary<string, string>
+            var parameters = new Dictionary<string, object>
         {
             { "count", "500" },
             {"from_time", ToUnixTimestampMilliseconds(DateTime.Now.AddDays(-10)).ToString()},
@@ -769,7 +769,7 @@ namespace CoinswitchTrader.Services
             { "symbols", coin.ToUpper() },
             { "exchanges", "coinswitchx" },
             { "type", "limit" },
-            {"open", "True" }
+            {"open", true }
         };
 
             var jsonResponse = await GetOpenOrdersAsync(parameters);

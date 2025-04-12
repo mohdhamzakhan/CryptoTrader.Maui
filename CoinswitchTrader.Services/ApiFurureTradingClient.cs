@@ -277,6 +277,50 @@ namespace CoinswitchTrader.Services
             return dictionary;
         }
 
+        public async Task<List<CandleData>> GetKlinesAsync(string symbol, string interval, int limit = 100)
+        {
+            try
+            {
+                var parameters = new Dictionary<string, string>
+                {
+                    { "symbol", symbol },
+                    { "interval", interval },
+                    { "limit", limit.ToString() }
+                };
+
+                var response = await MakeRequestAsync("GET", "/trade/api/v2/futures/klines", parameters);
+                var candlesArray = JsonConvert.DeserializeObject<List<List<object>>>(response);
+
+                var candles = new List<CandleData>();
+
+                foreach (var candleData in candlesArray)
+                {
+                    var timestamp = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(candleData[0])).DateTime;
+                    var open = Convert.ToDecimal(candleData[1]);
+                    var high = Convert.ToDecimal(candleData[2]);
+                    var low = Convert.ToDecimal(candleData[3]);
+                    var close = Convert.ToDecimal(candleData[4]);
+                    var volume = Convert.ToDecimal(candleData[5]);
+
+                    candles.Add(new CandleData
+                    {
+                        Timestamp = timestamp,
+                        Open = open,
+                        High = high,
+                        Low = low,
+                        Close = close,
+                        Volume = volume
+                    });
+                }
+
+                return candles;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting klines: {ex.Message}");
+                return new List<CandleData>();
+            }
+        }
 
         // ================= FUTURES APIs =================
 

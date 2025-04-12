@@ -1,10 +1,14 @@
 ﻿using CoinswitchTrader.Services;
 using CryptoTrader.Maui.CoinswitchTrader.Services;
 using CryptoTrader.Maui.Model;
-using CryptoTrader.Maui.ViewModels;
-using Newtonsoft.Json.Linq;
+using CryptoTrader.Maui.Models;
 using System.Collections.ObjectModel;
-using System.Timers;
+using System.Runtime.Versioning;
+
+#if ANDROID
+using Android.Content;
+using CryptoTrader.Maui.Platforms.Android;
+#endif
 
 namespace CryptoTrader.Maui.Pages;
 
@@ -21,7 +25,6 @@ public partial class DashboardPage : ContentPage
     {
         InitializeComponent();
         MarketListView.ItemsSource = _marketDataList;
-        OpenOrdersListView.ItemsSource = _openOrdersList;
 
         StartAutoRefresh();
         _settingsService = new SettingsService();
@@ -56,24 +59,40 @@ public partial class DashboardPage : ContentPage
                 });
             }
 
-            // Fetch open orders
-            var openOrders = await FetchOpenOrdersAsync();
-            if (openOrders != null)
+            var order = await FetchOpenOrdersAsync();
+            var InrBalance = await _tradingService.GetBalanceCurrencyAsync("INR");
+            if (order != null)
             {
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    _openOrdersList.Clear();
-                    foreach (var order in openOrders)
-                        _openOrdersList.Add(order);
+                    OrdersCollectionView.ItemsSource = order;
+                    BalanceLabel.Text = $"INR Balance: {InrBalance}";
+
                 });
             }
+
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error during RefreshData: {ex}");
         }
     }
-
+    [SupportedOSPlatform("android26.0")]
+    private void OnStartTradingClicked(object sender, EventArgs e)
+    {
+#if ANDROID
+    var context = Android.App.Application.Context;
+    var intent = new Intent(context, typeof(TradingBackgroundService));
+    if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
+    {
+        context.StartForegroundService(intent);
+    }
+    else
+    {
+        context.StartService(intent);
+    }
+#endif
+    }
 
     private async Task<List<Model.MarketData>> FetchMarketDataAsync()
     {
@@ -90,7 +109,7 @@ public partial class DashboardPage : ContentPage
 
             return data.Select(item => new Model.MarketData
             {
-                Symbol = $"{item.Symbol}/INR",
+                Symbol = $"{item.Symbol}",
                 Bid = item.Bid,
                 Ask = item.Ask
             }).ToList();
@@ -103,28 +122,45 @@ public partial class DashboardPage : ContentPage
         }
     }
 
-    private async Task<List<OrderData>> FetchOpenOrdersAsync()
+    private async void OnShareLogsClicked(object sender, EventArgs e)
     {
         try
         {
-            // Call your API to get open orders
-            using var client = new HttpClient();
-            var response = await client.GetAsync("YOUR_OPEN_ORDERS_API_URL");
-            if (response.IsSuccessStatusCode)
-            {
-                var jsonString = await response.Content.ReadAsStringAsync();
-                var json = JObject.Parse(jsonString);
+           await Logger.ShareLogFileAsync();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to share logs: {ex.Message}", "OK");
+        }
+    }
 
-                var orders = json["data"]?["orders"]?.ToObject<List<OrderData>>();
-                return orders ?? new List<OrderData>();
-            }
+    private async void OnDeleteLogsClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            Logger.Delete();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to delete logs: {ex.Message}", "OK");
+        }
+    }
+
+
+    private async Task<List<OrderModel>> FetchOpenOrdersAsync()
+    {
+        try
+        {
+           return await _dashboardService.GetCurrentOpenOrdersAsync();
+
+
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error fetching open orders: {ex.Message}");
         }
-
         return null;
+
     }
 
     protected override void OnDisappearing()

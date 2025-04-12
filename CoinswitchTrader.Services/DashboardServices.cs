@@ -1,8 +1,10 @@
 ﻿using CoinswitchTrader.Services;
 using CryptoTrader.Maui.Model;
+using CryptoTrader.Maui.Models;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -56,6 +58,25 @@ namespace CryptoTrader.Maui.CoinswitchTrader.Services
                 throw new Exception("Error fetching market data: " + ex.Message);
                 
             }
+        }
+
+        public async Task<List<OrderModel>> GetCurrentOpenOrdersAsync()
+        {
+            try
+            {
+                string tradingPairsString = string.Join(",",
+                    _settingsService.ScalpingSymbols.Split(',')
+                    .Select(s => s.Trim() + "/INR")
+                );
+
+                // API call to get orders
+                return await _tradingService.GetOpenOrdersAsync(tradingPairsString, "COINSWITCHX");
+            }
+            catch (Exception ex)
+            {
+               
+            }
+            return null;
         }
     }
 }

@@ -182,10 +182,58 @@ namespace CoinswitchTrader.Services
         /// <summary>
         /// Gets all open orders
         /// </summary>
-        public async Task<JObject> GetOpenOrdersAsync()
+        public async Task<List<OrderModel>> GetOpenOrdersAsync(string symbols, string exchanges)
         {
-            var response = await _apiClient.GetOpenOrdersAsync();
-            return JsonConvert.DeserializeObject<JObject>(response);
+            var toTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+            var fromTime = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeMilliseconds().ToString();
+
+            var queryParamsSell = new Dictionary<string, object>
+    {
+        { "count", "100" },
+        { "from_time", fromTime },
+        { "to_time", toTime },
+        { "side", "sell" },
+        { "symbols", symbols },
+        { "exchanges", exchanges },
+        { "type", "limit" },
+        { "open", true }
+    };
+
+            var queryParamsBuy = new Dictionary<string, object>
+    {
+        { "count", "100" },
+        { "from_time", fromTime },
+        { "to_time", toTime },
+        { "side", "buy" },
+        { "symbols", symbols },
+        { "exchanges", exchanges },
+        { "type", "limit" },
+        { "open", true }
+    };
+
+            var sellResponse = await _apiClient.GetOpenOrdersAsync(queryParamsSell);
+            var buyResponse = await _apiClient.GetOpenOrdersAsync(queryParamsBuy);
+
+            var sellJson = JsonConvert.DeserializeObject<JObject>(sellResponse);
+            var buyJson = JsonConvert.DeserializeObject<JObject>(buyResponse);
+
+            var sellOrdersArray = sellJson["data"]?["orders"];
+            var buyOrdersArray = buyJson["data"]?["orders"];
+
+            var sellOrders = sellOrdersArray != null && sellOrdersArray.HasValues
+                ? sellOrdersArray.ToObject<List<OrderModel>>()
+                : new List<OrderModel>();
+
+            var buyOrders = buyOrdersArray != null && buyOrdersArray.HasValues
+                ? buyOrdersArray.ToObject<List<OrderModel>>()
+                : new List<OrderModel>();
+
+            // 🔥 Merge both lists
+            var mergedOrders = sellOrders.Concat(buyOrders)
+                                         .OrderByDescending(o => o.created_time) // 🔥 Sort merged list
+                                         .ToList();
+            
+            return mergedOrders;
         }
 
         /// <summary>
