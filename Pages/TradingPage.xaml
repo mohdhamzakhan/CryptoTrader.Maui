@@ -87,9 +87,18 @@
         BackgroundColor="Green"
         TextColor="White"
         CornerRadius="10"/>
+
+                    
                     <Button Text="Start Trading"
 Clicked="StartNewTradingClicked"
                     x:Name="btnNewTrading"
+BackgroundColor="Green"
+TextColor="White"
+CornerRadius="10"/>
+
+                    <Button Text="Start chandelier"
+Clicked="StartchandelierClicked"
+                    x:Name="btnchandelier"
 BackgroundColor="Green"
 TextColor="White"
 CornerRadius="10"/>

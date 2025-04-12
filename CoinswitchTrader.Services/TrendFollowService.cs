@@ -148,6 +148,10 @@ namespace CoinswitchTrader.Services
                                             string orderId = order["data"]["order_id"].ToString();
                                             _openOrders[key].Add(orderId);
                                             Logger.Log($"BUY {quantity} {symbol} at {bidPrice}");
+#if ANDROID
+                                            var context = Android.App.Application.Context;
+                                            Android.Widget.Toast.MakeText(context, $"Order Placed {orderId}", Android.Widget.ToastLength.Short)?.Show();
+#endif
                                         }
                                     }
                                 }
@@ -167,6 +171,10 @@ namespace CoinswitchTrader.Services
                                             string orderId = order["data"]["order_id"].ToString();
                                             _openOrders[key].Add(orderId);
                                             Logger.Log($"SELL {perOrderBalance} {symbol} at {askPrice}");
+//#if ANDROID
+//                                            var context = Android.App.Application.Context;
+//                                            Android.Widget.Toast.MakeText(context, $"Order Placed {orderId}", Android.Widget.ToastLength.Short)?.Show();
+//#endif
                                         }
                                         else
                                         {
@@ -176,6 +184,10 @@ namespace CoinswitchTrader.Services
                                                 string orderId = order["data"]["order_id"].ToString();
                                                 _openOrders[key].Add(orderId);
                                                 Logger.Log($"SELL {perOrderBalance} {symbol} at {askPrice}");
+//#if ANDROID
+//                                                var context = Android.App.Application.Context;
+//                                                Android.Widget.Toast.MakeText(context, $"Order Placed {orderId}", Android.Widget.ToastLength.Short)?.Show();
+//#endif
                                             }
                                         }
                                     }

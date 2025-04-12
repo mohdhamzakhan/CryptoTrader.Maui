@@ -1,4 +1,5 @@
 using CoinswitchTrader.Services;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.ObjectModel;
 
@@ -137,6 +138,14 @@ public partial class TradingPage : ContentPage
             trendFollow.StopTrading();
         }
     }
+
+    private async void StartchandelierClicked(object sender, EventArgs e)
+    {
+        var response = await _tradingService.GetLeverageForCoin("exchange_2", "exchange_2");
+    }
+
+
+
 
     private void LogOrder(string type, JObject response)
     {

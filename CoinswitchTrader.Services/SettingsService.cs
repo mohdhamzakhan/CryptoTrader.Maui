@@ -17,6 +17,7 @@ namespace CoinswitchTrader.Services
         private const int DEFAULT_BID = 0;
         private const int DEFAULT_ASK = 1;
         private const bool DEFAULT_LOGGING_ENABLED = false;
+        
 
         // Keys for settings storage
         private const string TDS_RATE_KEY = "TdsRate";
@@ -30,9 +31,11 @@ namespace CoinswitchTrader.Services
         private const string SCALPING_PROFIT_THRESHOLD = "ScalpingProfitThreshold";
         private const string SCALPING_MAX_TRADE_SIZE = "ScalpingMaxTradeSize";
         private const string SCALPING_TRADING_PAIR = "BTC,ETH";
-        private const string DEFAULT_BID_KEY = "1";
-        private const string DEFAULT_ASK_KEY = "1";
+        private const string DEFAULT_BID_KEY = "DefaultBidPosition";
+        private const string DEFAULT_ASK_KEY = "DefaultAskPosition"; // make sure it's different!
         private const string LOGGING_ENABLED = "true";
+        private const string TRADING_MODE = "TrainingMode";
+        
 
 
         public int StochasticKPeriod { get; set; } = 14;
@@ -108,6 +111,9 @@ namespace CoinswitchTrader.Services
 
             if (!Preferences.ContainsKey(DEFAULT_ASK_KEY))
                 Preferences.Set(DEFAULT_ASK_KEY, "1");
+
+            if (!Preferences.ContainsKey(TRADING_MODE))
+                Preferences.Set(TRADING_MODE, "SPOT");
         }
 
         public int SMA_Period
@@ -156,20 +162,32 @@ namespace CoinswitchTrader.Services
             get
             {
                 string value = Preferences.Get(DEFAULT_BID_KEY, DEFAULT_BID.ToString());
+                //Console.WriteLine($"[AskPosition Getter] Retrieved value = {value}");
                 return Int32.TryParse(value, out int result) ? result : DEFAULT_BID;
             }
-            set => Preferences.Set(TDS_RATE_KEY, value.ToString());
+            set
+            {
+                Console.WriteLine($"[AskPosition Setter] Saving value = {value}");
+                Preferences.Set(DEFAULT_BID_KEY, value.ToString());
+            }
         }
+
 
         public int AskPosition
         {
             get
             {
                 string value = Preferences.Get(DEFAULT_ASK_KEY, DEFAULT_ASK.ToString());
+                //Console.WriteLine($"[AskPosition Getter] Retrieved value = {value}");
                 return Int32.TryParse(value, out int result) ? result : DEFAULT_ASK;
             }
-            set => Preferences.Set(TDS_RATE_KEY, value.ToString());
+            set
+            {
+                Console.WriteLine($"[AskPosition Setter] Saving value = {value}");
+                Preferences.Set(DEFAULT_ASK_KEY, value.ToString());
+            }
         }
+
 
         // TDS Rate property (percentage as decimal, e.g., 0.01 for 1%)
         public decimal TdsRate
@@ -218,6 +236,12 @@ namespace CoinswitchTrader.Services
         {
             get => Preferences.Get(DEFAULT_EXCHANGE, "COINSWITCHX");
             set => Preferences.Set(DEFAULT_EXCHANGE, value);
+        }
+
+        public string TradingMode
+        {
+            get => Preferences.Get(TRADING_MODE, "SPOT");
+            set => Preferences.Set(TRADING_MODE, value);
         }
 
         // Default Trading Pair

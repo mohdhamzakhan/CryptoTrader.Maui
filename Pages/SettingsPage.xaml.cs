@@ -51,6 +51,8 @@ public partial class SettingsPage : ContentPage
             _settingsService.ScalpingMaxTradeSize = decimal.Parse(ScalpingMaxTradeSizeEntry.Text);
             _settingsService.ScalpingSymbols = ScalpingPairEntry.Text;
             _settingsService.LoggingEnabled = LoggingToggle.IsToggled;
+            _settingsService.BidPosition = Int32.Parse(BidPosition.Text);
+            _settingsService.AskPosition =Int32.Parse(AskPosition.Text);
 
             await DisplayAlert("Success", "Settings saved successfully!", "OK");
         }

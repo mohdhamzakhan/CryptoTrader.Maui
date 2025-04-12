@@ -1,14 +1,49 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="CryptoTrader.Maui.Pages.AnalyticsPage"
-             Title="AnalyticsPage">
+             Title="Analytics">
     <ScrollView>
-        <VerticalStackLayout Padding="20">
-            <Label Text="Trading Performance" FontSize="24" FontAttributes="Bold"/>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="Trading Orders" FontSize="26" FontAttributes="Bold" HorizontalOptions="Center"/>
 
-            <Button Text="View Trade History" Clicked="OnViewHistoryClicked"/>
-            <Button Text="Export Reports" Clicked="OnExportReportsClicked"/>
+            <Button Text="View Trade History" Clicked="OnViewHistoryClicked" BackgroundColor="#007AFF" TextColor="White" CornerRadius="10" />
+
+            <CollectionView x:Name="OrdersCollectionView" Margin="0,20,0,0">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame BorderColor="#CCCCCC" CornerRadius="10" Padding="10" Margin="0,5">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                                <!-- Symbol + Side + Icon -->
+                                <HorizontalStackLayout Spacing="5">
+                                    <Label Text="{Binding symbol}" FontSize="18" FontAttributes="Bold" />
+                                </HorizontalStackLayout>
+
+                                <HorizontalStackLayout Grid.Column="1" Spacing="5" HorizontalOptions="End">
+                                    <Label Text="{Binding SideIcon}" FontSize="18" TextColor="{Binding SideColor}" />
+                                    <Label Text="{Binding side}" FontSize="16" TextColor="{Binding SideColor}" />
+                                </HorizontalStackLayout>
+
+                                <!-- Status -->
+                                <Label Text="{Binding status}" FontSize="14" Grid.Row="1" TextColor="Gray" />
+
+                                <!-- Price + Executed Qty -->
+                                <HorizontalStackLayout Grid.Row="2" Spacing="10">
+                                    <Label Text="{Binding price, StringFormat='Price: {0:F6}'}" FontSize="14" />
+                                    <Label Text="{Binding executed_qty, StringFormat='Qty: {0:F6}'}" FontSize="14" />
+                                </HorizontalStackLayout>
+
+                                <!-- Created and Updated Time -->
+                                <VerticalStackLayout Grid.Row="3" Spacing="2">
+                                    <Label Text="{Binding CreatedTimeFormatted}" FontSize="12" TextColor="DarkGray" />
+                                    <Label Text="{Binding UpdatedTimeFormatted}" FontSize="12" TextColor="DarkGray" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

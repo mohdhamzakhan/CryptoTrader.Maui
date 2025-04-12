@@ -229,6 +229,10 @@ namespace CoinswitchTrader.Services
                                             _openOrders[key].Add(orderId);
                                             _lastBuyPrices[key] = bidPrice; // Record last buy price
                                             Logger.Log($"BUY {quantity} {symbol} at {bidPrice}");
+#if ANDROID
+                                            var context = Android.App.Application.Context;
+                                            Android.Widget.Toast.MakeText(context, $"Order Placed {orderId}", Android.Widget.ToastLength.Short)?.Show();
+#endif
 
                                             // Increment consecutive trade counter
                                             _consecutiveTrades[key]++;
@@ -261,7 +265,10 @@ namespace CoinswitchTrader.Services
                                             _openOrders[key].Add(orderId);
                                             _lastSellPrices[key] = askPrice; // Record last sell price
                                             Logger.Log($"SELL {perOrderBalance} {symbol} at {askPrice}");
-
+//#if ANDROID
+//                                            //var context = Android.App.Application.Context;
+//                                            //Android.Widget.Toast.MakeText(context, $"Order Placed {orderId}", Android.Widget.ToastLength.Short)?.Show();
+//#endif
                                             // Increment consecutive trade counter
                                             _consecutiveTrades[key]++;
                                         }
@@ -274,6 +281,10 @@ namespace CoinswitchTrader.Services
                                                 _openOrders[key].Add(orderId);
                                                 _lastSellPrices[key] = askPrice; // Record last sell price
                                                 Logger.Log($"SELL {perOrderBalance} {symbol} at {askPrice}");
+//#if ANDROID
+//                                                var context = Android.App.Application.Context;
+//                                                Android.Widget.Toast.MakeText(context, $"Order Placed {orderId}", Android.Widget.ToastLength.Short)?.Show();
+//#endif
                                             }
 
                                             // Increment consecutive trade counter

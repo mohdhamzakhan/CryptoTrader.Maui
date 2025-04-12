@@ -5,8 +5,9 @@
              Title="DashboardPage">
     <ScrollView>
         <VerticalStackLayout Padding="20">
+
             <Label Text="Portfolio Summary" FontSize="24" FontAttributes="Bold"/>
-            <Label Text="Total Balance: ₹0   ---- Hamza New" x:Name="BalanceLabel" FontSize="18"/>
+            <Label Text="Total Balance: ₹0" x:Name="BalanceLabel" FontSize="18"/>
 
             <Label Text="Live Market Data" FontSize="20" FontAttributes="Bold" Margin="0,20,0,5"/>
             <ListView x:Name="MarketListView" HeightRequest="200">
@@ -14,8 +15,26 @@
                     <DataTemplate>
                         <ViewCell>
                             <StackLayout Orientation="Horizontal" Padding="10">
-                                <Label Text="{Binding Symbol}" FontSize="16"/>
-                                <Label Text="{Binding Price}" FontSize="16" HorizontalOptions="EndAndExpand"/>
+                                <Label Text="{Binding Symbol, StringFormat= 'Coin -: {0} '}" FontSize="16"/>
+                                <Label Text="{Binding Ask, StringFormat=' Ask -: {0:F6} '}" FontSize="16"/>
+                                <Label Text="{Binding Bid, StringFormat=' Bid -: {0:F6} '}" FontSize="16"/>
+                            </StackLayout>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <Label Text="Open Orders" FontSize="20" FontAttributes="Bold" Margin="0,20,0,5"/>
+            <ListView x:Name="OpenOrdersListView" HeightRequest="200">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <StackLayout Padding="10">
+                                <Label Text="{Binding Symbol}" FontSize="16" FontAttributes="Bold"/>
+                                <Label Text="Price: ₹{Binding Price}" FontSize="14"/>
+                                <Label Text="Quantity: {Binding OrigQty}" FontSize="14"/>
+                                <Label Text="Status: {Binding Status}" FontSize="14"/>
+                                <Label Text="Side: {Binding Side}" FontSize="14"/>
                             </StackLayout>
                         </ViewCell>
                     </DataTemplate>
@@ -23,20 +42,7 @@
             </ListView>
 
             <Button Text="Refresh Data" Clicked="OnRefreshClicked"/>
-            <Button Text="Start Trading Service" Clicked="OnStartServiceClicked" />
-            <Button Text="Download Log"
-        Clicked="OnDownloadLogClicked"
-        BackgroundColor="DarkBlue"
-        TextColor="White"
-        Padding="10"
-        Margin="20"/>
 
-            <Button Text="Download Log"
-Clicked="OnDeleteLogClicked"
-BackgroundColor="Red"
-TextColor="White"
-Padding="10"
-Margin="20"/>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

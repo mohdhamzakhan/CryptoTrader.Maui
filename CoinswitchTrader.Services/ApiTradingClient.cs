@@ -213,6 +213,44 @@ namespace CoinswitchTrader.Services
             }
         }
 
+        public async Task<string> MakeRequestObjectAsync(string method, string endpoint, object payload = null, Dictionary<string, object> paramsDict = null)
+        {
+            try
+            {
+                if (method == HttpMethod.Get.Method && paramsDict != null && paramsDict.Count > 0)
+                {
+                    endpoint += '?' + string.Join("&", paramsDict.Select(kv => $"{kv.Key}={kv.Value}"));
+                    endpoint = Uri.UnescapeDataString(endpoint.Replace("+", " "));
+                }
+
+                string epochTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+                string signatureMsg = SignatureMessage(method, endpoint, epochTime);
+                string signature = GetSignatureOfRequest(this.secretKey, signatureMsg);
+
+                if (signature == null)
+                {
+                    return JsonConvert.SerializeObject(new { message = "Please Enter Valid Keys" });
+                }
+
+                string url = $"{this.baseUrl}{endpoint}";
+
+                // Use the CallApiAsync method for the actual API call
+                var headers = new Dictionary<string, string>
+                {
+                    { "X-AUTH-SIGNATURE", signature },
+                    { "X-AUTH-APIKEY", this.apiKey },
+                    { "X-REQUEST-ID", "prod-Hamza" },
+                    { "X-AUTH-EPOCH", epochTime }
+                };
+
+                return await CallApiAsync(url, new HttpMethod(method), headers, payload);
+            }
+            catch (Exception ex)
+            {
+                return JsonConvert.SerializeObject(new { error = ex.Message });
+            }
+        }
+
 
 
         public Dictionary<string, object> RemoveTrailingZeros(Dictionary<string, object> dictionary)
@@ -258,11 +296,11 @@ namespace CoinswitchTrader.Services
             return MakeRequestAsync("GET", "/trade/api/v2/orders", null, paramsDict);
         }
 
-        public Task<string> GetClosedOrdersAsync(Dictionary<string, string> paramsDict = null)
+        public Task<string> GetClosedOrdersAsync(Dictionary<string, object> paramsDict = null)
         {
-            if (paramsDict == null) paramsDict = new Dictionary<string, string>();
+            if (paramsDict == null) paramsDict = new Dictionary<string, object>();
             // paramsDict["open"] = "false";
-            return MakeRequestAsync("GET", "/trade/api/v2/orders", null, paramsDict);
+            return MakeRequestObjectAsync("GET", "/trade/api/v2/orders", null, paramsDict);
         }
 
         public Task<string> GetOrderAsync(Dictionary<string, string> paramsDict)

@@ -1,47 +1,119 @@
-using CoinswitchTrader.Services;
+﻿using CoinswitchTrader.Services;
+using CryptoTrader.Maui.Model;
 using CryptoTrader.Maui.ViewModels;
+using Newtonsoft.Json.Linq;
+using System.Collections.ObjectModel;
+using System.Timers;
 
 namespace CryptoTrader.Maui.Pages;
 
 public partial class DashboardPage : ContentPage
 {
+    private ObservableCollection<Model.MarketData> _marketDataList = new();
+    private ObservableCollection<OrderData> _openOrdersList = new();
+    private System.Timers.Timer _refreshTimer;
     public DashboardPage()
     {
         InitializeComponent();
-        BindingContext = new DashboardViewModel(new TradingService("aa18ca959d1a13d7635af410ce76ce09a67952cb1f566b8ed50f5b6c36363fbb", "9f7e37bc68a33d5addefc7ceb957cd5336aef9b7b3404c00f4a0af1bcc49c58d",  new SettingsService()));
+        MarketListView.ItemsSource = _marketDataList;
+        OpenOrdersListView.ItemsSource = _openOrdersList;
+
+        StartAutoRefresh();
+    }
+    private void StartAutoRefresh()
+    {
+        _refreshTimer = new System.Timers.Timer(10000); // 10 seconds
+        _refreshTimer.Elapsed += async (s, e) => await RefreshData();
+        _refreshTimer.Start();
     }
 
     private async void OnRefreshClicked(object sender, EventArgs e)
     {
-        await DisplayAlert("Refresh", "Market data refreshed!", "OK");
+        await RefreshData();
     }
 
-    private async void OnDownloadLogClicked(object sender, EventArgs e)
+    private async Task RefreshData()
     {
-        await Logger.ShareLogFileAsync();
+        try
+        {
+            // Fetch market data
+            var marketData = await FetchMarketDataAsync();
+            if (marketData != null)
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    _marketDataList.Clear();
+                    foreach (var item in marketData)
+                        _marketDataList.Add(item);
+                });
+            }
+
+            // Fetch open orders
+            var openOrders = await FetchOpenOrdersAsync();
+            if (openOrders != null)
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    _openOrdersList.Clear();
+                    foreach (var order in openOrders)
+                        _openOrdersList.Add(order);
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during RefreshData: {ex}");
+        }
     }
 
-    private void OnDeleteLogClicked(object sender, EventArgs e)
+
+    private async Task<List<Model.MarketData>> FetchMarketDataAsync()
     {
-        Logger.Delete();
+        try
+        {
+            // TODO: Call your live market API here and parse the response
+            // For now, returning dummy data
+            await Task.Delay(500); // simulate network delay
+            return new List<Model.MarketData>
+            {
+                new Model.MarketData { Symbol = "BTC/INR", Ask = 4444 },
+                new Model.MarketData { Symbol = "ETH/INR", Bid = 3333 }
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching market data: {ex.Message}");
+            return null;
+        }
     }
 
-    private void OnStartServiceClicked(object sender, EventArgs e)
+    private async Task<List<OrderData>> FetchOpenOrdersAsync()
     {
-#if ANDROID
-    var context = Android.App.Application.Context;
-    var intent = new Android.Content.Intent(context, typeof(CryptoTrader.Maui.Platforms.Android.TradingBackgroundService));
+        try
+        {
+            // Call your API to get open orders
+            using var client = new HttpClient();
+            var response = await client.GetAsync("YOUR_OPEN_ORDERS_API_URL");
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var json = JObject.Parse(jsonString);
 
-    if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
-    {
-        context.StartForegroundService(intent);
-        Android.Widget.Toast.MakeText(context, "Trading Service Started", Android.Widget.ToastLength.Short)?.Show();
-    }
-    else
-    {
-        context.StartService(intent);
-    }
-#endif
+                var orders = json["data"]?["orders"]?.ToObject<List<OrderData>>();
+                return orders ?? new List<OrderData>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching open orders: {ex.Message}");
+        }
+
+        return null;
     }
 
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        _refreshTimer?.Stop();
+    }
 }
