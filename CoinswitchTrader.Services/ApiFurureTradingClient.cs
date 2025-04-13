@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using CryptoTrader.Maui.CoinswitchTrader.Services;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
@@ -277,7 +278,7 @@ namespace CoinswitchTrader.Services
             return dictionary;
         }
 
-        public async Task<List<CandleData>> GetKlinesAsync(string symbol, string interval, int limit = 100)
+        public async Task<List<FutureCandleData>> GetKlinesAsync(string symbol, string interval, int limit = 100)
         {
             try
             {
@@ -291,7 +292,7 @@ namespace CoinswitchTrader.Services
                 var response = await MakeRequestAsync("GET", "/trade/api/v2/futures/klines", parameters);
                 var candlesArray = JsonConvert.DeserializeObject<List<List<object>>>(response);
 
-                var candles = new List<CandleData>();
+                var candles = new List<FutureCandleData>();
 
                 foreach (var candleData in candlesArray)
                 {
@@ -302,7 +303,7 @@ namespace CoinswitchTrader.Services
                     var close = Convert.ToDecimal(candleData[4]);
                     var volume = Convert.ToDecimal(candleData[5]);
 
-                    candles.Add(new CandleData
+                    candles.Add(new FutureCandleData
                     {
                         Timestamp = timestamp,
                         Open = open,
@@ -318,7 +319,7 @@ namespace CoinswitchTrader.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error getting klines: {ex.Message}");
-                return new List<CandleData>();
+                return new List<FutureCandleData>();
             }
         }
 
@@ -401,8 +402,6 @@ namespace CoinswitchTrader.Services
         {
             return MakeRequestAsync("GET", "/trade/api/v2/futures/insurance_fund/history", paramsDict);
         }
-
-
 
         public string FormatJson(string json)
         {

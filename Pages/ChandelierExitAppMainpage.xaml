@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CryptoTrader.Maui.Pages.ChandelierExitAppMainpage"
+             xmlns:viewmodels="clr-namespace:CryptoTrader.Maui.ViewModels"
+             xmlns:models="clr-namespace:CryptoTrader.Maui.CoinswitchTrader.Services"
+             Title="ChandelierExitAppMainpage">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Color x:Key="PrimaryColor">#512BD4</Color>
+            <Color x:Key="SecondaryColor">#DFD8F7</Color>
+            <Color x:Key="TertiaryColor">#2B0B98</Color>
+            <Color x:Key="BuyColor">#4CAF50</Color>
+            <Color x:Key="SellColor">#F44336</Color>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="10" Padding="20">
+            <Frame BorderColor="{StaticResource PrimaryColor}" Padding="10" Margin="0,0,0,10">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Connection Settings" FontSize="18" FontAttributes="Bold" />
+                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                        <Label Grid.Row="0" Grid.Column="0" Text="API Key:" VerticalOptions="Center" />
+                        <Entry Grid.Row="0" Grid.Column="1" Text="{Binding ApiKey}" Placeholder="Enter API Key" />
+
+                        <Label Grid.Row="1" Grid.Column="0" Text="Secret Key:" VerticalOptions="Center" />
+                        <Entry Grid.Row="1" Grid.Column="1" Text="{Binding SecretKey}" Placeholder="Enter Secret Key"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Button Grid.Column="0" Text="Connect" Command="{Binding ConnectCommand}" BackgroundColor="{StaticResource PrimaryColor}" TextColor="White" />
+                        <Button Grid.Column="1" Text="Disconnect" Command="{Binding DisconnectCommand}" BackgroundColor="{StaticResource TertiaryColor}" TextColor="White" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame BorderColor="{StaticResource PrimaryColor}" Padding="10" Margin="0,0,0,10">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Trading Settings" FontSize="18" FontAttributes="Bold" />
+                    <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                        <Label Grid.Row="0" Grid.Column="0" Text="Symbol:" VerticalOptions="Center" />
+                        <Picker Grid.Row="0" Grid.Column="1" Title="Select Symbol" 
+                    ItemsSource="{Binding AvailableSymbols}" 
+                    SelectedItem="{Binding SelectedSymbol}" />
+
+                        <Label Grid.Row="1" Grid.Column="0" Text="Interval:" VerticalOptions="Center" />
+                        <Picker Grid.Row="1" Grid.Column="1" Title="Select Interval" 
+                    ItemsSource="{Binding AvailableIntervals}" 
+                    SelectedItem="{Binding SelectedInterval}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+            <Frame BorderColor="{StaticResource PrimaryColor}" Padding="10" Margin="0,0,0,10">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Strategy Parameters" FontSize="18" FontAttributes="Bold" />
+                    <Grid ColumnDefinitions="140,*,50" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="10">
+                        <!-- ATR Period -->
+                        <Label Grid.Row="0" Grid.Column="0" Text="ATR Period:" VerticalOptions="Center" />
+                        <Slider Grid.Row="0" Grid.Column="1" Minimum="5" Maximum="50" Value="{Binding Settings.AtrPeriod}" />
+                        <Label Grid.Row="0" Grid.Column="2" Text="{Binding Settings.AtrPeriod, StringFormat='{0:F0}'}" 
+                   VerticalOptions="Center" HorizontalOptions="Center" />
+
+                        <!-- ATR Multiplier -->
+                        <Label Grid.Row="1" Grid.Column="0" Text="ATR Multiplier:" VerticalOptions="Center" />
+                        <Slider Grid.Row="1" Grid.Column="1" Minimum="1" Maximum="5" Value="{Binding Settings.AtrMultiplier}" />
+                        <Label Grid.Row="1" Grid.Column="2" Text="{Binding Settings.AtrMultiplier, StringFormat='{0:F1}'}" 
+                   VerticalOptions="Center" HorizontalOptions="Center" />
+
+                        <!-- Trailing Stop -->
+                        <Label Grid.Row="2" Grid.Column="0" Text="Trailing Stop (%):" VerticalOptions="Center" />
+                        <Slider Grid.Row="2" Grid.Column="1" Minimum="1" Maximum="10" Value="{Binding Settings.TrailingStopLossPercent}" />
+                        <Label Grid.Row="2" Grid.Column="2" Text="{Binding Settings.TrailingStopLossPercent, StringFormat='{0:F1}'}" 
+                   VerticalOptions="Center" HorizontalOptions="Center" />
+
+                        <!-- Checkboxes -->
+                        <Label Grid.Row="3" Grid.Column="0" Text="Use Close Price:" VerticalOptions="Center" />
+                        <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding Settings.UseClosePriceForExtremums}" 
+                      HorizontalOptions="Start" VerticalOptions="Center" />
+
+                        <Label Grid.Row="4" Grid.Column="0" Text="Exit on Reversal:" VerticalOptions="Center" />
+                        <CheckBox Grid.Row="4" Grid.Column="1" IsChecked="{Binding Settings.ExitOnSignalReversal}" 
+                      HorizontalOptions="Start" VerticalOptions="Center" />
+
+                        <Label Grid.Row="5" Grid.Column="0" Text="Wait for Bar Close:" VerticalOptions="Center" />
+                        <CheckBox Grid.Row="5" Grid.Column="1" IsChecked="{Binding Settings.AwaitBarConfirmation}" 
+                      HorizontalOptions="Start" VerticalOptions="Center" />
+
+                        <Label Grid.Row="6" Grid.Column="0" Text="Show Buy/Sell Labels:" VerticalOptions="Center" />
+                        <CheckBox Grid.Row="6" Grid.Column="1" IsChecked="{Binding Settings.ShowBuySellLabels}" 
+                      HorizontalOptions="Start" VerticalOptions="Center" />
+                    </Grid>
+                    <Button Text="Save Settings" Command="{Binding SaveSettingsCommand}" 
+                BackgroundColor="{StaticResource PrimaryColor}" TextColor="White" />
+                </VerticalStackLayout>
+            </Frame>
+
+
+            <Frame BorderColor="{StaticResource PrimaryColor}" Padding="10" Margin="0,0,0,10">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Active Positions" FontSize="18" FontAttributes="Bold" />
+                    <CollectionView ItemsSource="{Binding Positions}" EmptyView="No active positions">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:Position">
+                                <Frame Margin="0,5" Padding="10" BorderColor="{Binding IsLong, Converter={StaticResource BoolToColorConverter}, ConverterParameter='BuySell'}">
+                                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto">
+                                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding Symbol}" FontAttributes="Bold" />
+                                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding IsLong, Converter={StaticResource BoolToStringConverter}, ConverterParameter='LONG,SHORT'}" 
+                                               TextColor="{Binding IsLong, Converter={StaticResource BoolToColorConverter}, ConverterParameter='BuySell'}" 
+                                               HorizontalOptions="End" />
+
+                                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding Quantity, StringFormat='Qty: {0}'}" />
+                                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding EntryPrice, StringFormat='Entry: {0:F2}'}" HorizontalOptions="End" />
+
+                                        <Label Grid.Row="2" Grid.Column="0" Text="{Binding CurrentStopLoss, StringFormat='Stop: {0:F2}'}" />
+                                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding PnL, StringFormat='P&amp;L: {0:F2}'}" 
+                                               TextColor="{Binding PnL, Converter={StaticResource NumberToColorConverter}}" 
+                                               HorizontalOptions="End" />
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame BorderColor="{StaticResource PrimaryColor}" Padding="10" Margin="0,0,0,10">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Recent Signals" FontSize="18" FontAttributes="Bold" />
+                    <CollectionView ItemsSource="{Binding Signals}" EmptyView="No signals generated yet">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:TradingSignal">
+                                <Frame Margin="0,5" Padding="10" BorderColor="{Binding Type, Converter={StaticResource SignalTypeToColorConverter}}">
+                                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+                                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding Type}" 
+                                               TextColor="{Binding Type, Converter={StaticResource SignalTypeToColorConverter}}" 
+                                               FontAttributes="Bold" />
+                                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding Symbol}" HorizontalOptions="End" />
+
+                                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding Price, StringFormat='Price: {0:F2}'}" />
+                                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding Timestamp, StringFormat='{0:g}'}" HorizontalOptions="End" />
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame BorderColor="{StaticResource PrimaryColor}" Padding="10" Margin="0,0,0,10">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Status" FontSize="18" FontAttributes="Bold" />
+                    <Label Text="{Binding StatusMessage}" />
+                </VerticalStackLayout>
+            </Frame>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

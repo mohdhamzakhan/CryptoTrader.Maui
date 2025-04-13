@@ -37,6 +37,11 @@
         ContentTemplate="{DataTemplate pages:SettingsPage}"
         Route="SettingsPage" />
 
+    <ShellContent
+        Title="Chandelier"
+        ContentTemplate="{DataTemplate pages:ChandelierExitAppMainpage}"
+        Route="ChandelierExitAppMainpage" />
+
     <!--<ShellContent
         Title="Trade"
         ContentTemplate="{DataTemplate pages:OrdersPage}"

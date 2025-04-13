@@ -19,7 +19,7 @@
 
             <!-- Live Market Data Section -->
             <Label Text="Live Market Data" FontSize="20" FontAttributes="Bold" Margin="0,20,0,5" HorizontalOptions="Start" />
-            <ListView x:Name="MarketListView" HeightRequest="200" SeparatorVisibility="Default" BackgroundColor="#f9f9f9">
+            <!--<ListView x:Name="MarketListView" HeightRequest="200" SeparatorVisibility="Default" BackgroundColor="#f9f9f9">
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>
@@ -34,11 +34,9 @@
                         </ViewCell>
                     </DataTemplate>
                 </ListView.ItemTemplate>
-            </ListView>
+            </ListView>-->
 
-            <!-- Open Orders Section -->
-            <Label Text="Open Orders" FontSize="20" FontAttributes="Bold" Margin="0,20,0,5" HorizontalOptions="Start" />
-            <CollectionView x:Name="OrdersCollectionView" Margin="0,20,0,0">
+            <CollectionView x:Name="MarketPrice" Margin="0,20,0,0">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Frame BorderColor="#CCCCCC" CornerRadius="10" Padding="10" Margin="0,5">
@@ -58,9 +56,53 @@
 
                                 <!-- Price + Executed Qty -->
                                 <HorizontalStackLayout Grid.Row="2" Spacing="10">
+                                    <Label Text="{Binding Symbol, StringFormat='Coin: {0}'}" FontSize="12" />
+                                    <Label Text="{Binding Ask, Converter={StaticResource DynamicDecimalConverter}}" FontSize="12" />
+                                    <Label Text="{Binding Bid, Converter={StaticResource DynamicDecimalConverter}}" FontSize="12" />
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Open Orders Section -->
+            <Label Text="Open Orders" FontSize="20" FontAttributes="Bold" Margin="0,20,0,5" HorizontalOptions="Start" />
+            <CollectionView x:Name="OrdersCollectionView" Margin="0,20,0,0">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame BorderColor="#CCCCCC" CornerRadius="10" Padding="10" Margin="0,5">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                                <!-- Symbol + Side + Icon -->
+                                <HorizontalStackLayout Spacing="5">
+                                    <Label Text="{Binding symbol}" FontSize="18" FontAttributes="Bold" />
+                                </HorizontalStackLayout>
+
+                                <HorizontalStackLayout Grid.Column="1" Spacing="5" HorizontalOptions="End">
+                                    <!-- Cancel Button (X) -->
+                                    <Button
+                            Text="X"
+                            BackgroundColor="Transparent"
+                            TextColor="Red"
+                            FontSize="16"
+                            Padding="0"
+                            HeightRequest="30"
+                            WidthRequest="30"
+                            Command="{Binding BindingContext.CancelOrderCommand, Source={x:Reference OrdersCollectionView}}"
+                            CommandParameter="{Binding}" />
+
+                                    <Label Text="{Binding SideIcon}" FontSize="18" TextColor="{Binding SideColor}" />
+                                    <Label Text="{Binding side}" FontSize="16" TextColor="{Binding SideColor}" />
+                                </HorizontalStackLayout>
+
+                                <!-- Status -->
+                                <Label Text="{Binding status}" FontSize="14" Grid.Row="1" TextColor="Gray" />
+
+                                <!-- Price + Executed Qty -->
+                                <HorizontalStackLayout Grid.Row="2" Spacing="10">
                                     <Label Text="{Binding price, StringFormat='Price: {0:F6}'}" FontSize="12" />
                                     <Label Text="{Binding orig_qty, StringFormat='Qty: {0:F6}'}" FontSize="12" />
-                                    <Label Text="{Binding executed_qty, StringFormat='Executed: {0:F6}'}" FontSize="12" /> 
+                                    <Label Text="{Binding executed_qty, StringFormat='Executed: {0:F6}'}" FontSize="12" />
                                 </HorizontalStackLayout>
 
                                 <!-- Created and Updated Time -->
@@ -73,6 +115,7 @@
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
+
 
             <!-- Refresh Button -->
             <Button

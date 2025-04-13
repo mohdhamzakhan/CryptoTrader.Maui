@@ -4,6 +4,7 @@ using CryptoTrader.Maui.Model;
 using CryptoTrader.Maui.Models;
 using System.Collections.ObjectModel;
 using System.Runtime.Versioning;
+using System.Windows.Input;
 
 #if ANDROID
 using Android.Content;
@@ -17,6 +18,7 @@ public partial class DashboardPage : ContentPage
     private ObservableCollection<Model.MarketData> _marketDataList = new();
     private ObservableCollection<OrderData> _openOrdersList = new();
     private System.Timers.Timer _refreshTimer;
+    public ICommand CancelOrderCommand { get; }
 
     private readonly TradingService _tradingService;
     private readonly SettingsService _settingsService;
@@ -24,12 +26,11 @@ public partial class DashboardPage : ContentPage
     public DashboardPage()
     {
         InitializeComponent();
-        MarketListView.ItemsSource = _marketDataList;
-
         StartAutoRefresh();
         _settingsService = new SettingsService();
         _tradingService = new TradingService(_settingsService.SecretKey, _settingsService.ApiKey, _settingsService);
         _dashboardService = new DashboardServices(_tradingService, _settingsService);
+        CancelOrderCommand = new Command<OrderModel>(OnCancelOrder);
     }
     private void StartAutoRefresh()
     {
@@ -53,9 +54,7 @@ public partial class DashboardPage : ContentPage
             {
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    _marketDataList.Clear();
-                    foreach (var item in marketData)
-                        _marketDataList.Add(item);
+                    MarketPrice.ItemsSource = marketData;
                 });
             }
 
@@ -93,7 +92,14 @@ public partial class DashboardPage : ContentPage
     }
 #endif
     }
+    private void OnCancelOrder(OrderModel order)
+    {
+        if (order == null)
+            return;
 
+        // Logic to cancel the order
+        // For example:
+    }
     private async Task<List<Model.MarketData>> FetchMarketDataAsync()
     {
         try
