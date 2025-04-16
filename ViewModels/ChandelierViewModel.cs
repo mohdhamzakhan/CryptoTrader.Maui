@@ -20,7 +20,7 @@ namespace CryptoTrader.Maui.ViewModels
         private string _apiKey;
         private string _secretKey;
         private string _selectedSymbol = "BTCUSDT";
-        private string _selectedInterval = "1h";
+        private string _selectedInterval = "15";
         private ChandelierExitSettings _settings;
         private SettingsService _settingsService;
 
@@ -30,7 +30,7 @@ namespace CryptoTrader.Maui.ViewModels
 
         public ObservableCollection<string> AvailableIntervals { get; } = new ObservableCollection<string>
         {
-            "1m", "5m", "15m", "30m", "1h", "4h", "1d"
+           "1", "5", "15", "30", "60", "120", "240","360","720","1440"
         };
 
         public ObservableCollection<string> AvailableSymbols { get; } = new ObservableCollection<string>
@@ -171,10 +171,7 @@ namespace CryptoTrader.Maui.ViewModels
             try
             {
                 _tradingService.Initialize(SecretKey,ApiKey);
-                string symbol = "btcusdt";
-                string exchnage = "EXCHANGE_2";
-
-                var str = await _tradingService.GetLeverage(symbol, exchnage);
+                IsConnected=true;
                 StatusMessage = "Connected to trading service";
             }
             catch (Exception ex)

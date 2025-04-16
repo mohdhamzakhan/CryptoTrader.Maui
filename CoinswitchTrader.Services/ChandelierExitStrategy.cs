@@ -15,23 +15,33 @@ namespace CryptoTrader.Maui.CoinswitchTrader.Services
         private decimal _shortStop;
         private decimal _longStopPrev;
         private decimal _shortStopPrev;
-        private int _direction = 1; // 1 for bullish, -1 for bearish
+        private int _direction = 0; // Start with no direction until we have enough data
+        private bool _isInitialized = false;
 
         public ChandelierExitStrategy(ChandelierExitSettings settings)
         {
-            _settings = settings;
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }
 
         public void UpdateSettings(ChandelierExitSettings settings)
         {
-            _settings = settings;
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+
+            // Recalculate indicators with new settings if we have data
+            if (_historicalData.Count >= _settings.AtrPeriod)
+            {
+                CalculateIndicators();
+            }
         }
+
         public void AddCandle(FutureCandleData candle)
         {
+            if (candle == null) throw new ArgumentNullException(nameof(candle));
+
             _historicalData.Add(candle);
 
             // Maintain only necessary historical data
-            if (_historicalData.Count > _settings.AtrPeriod * 3)
+            while (_historicalData.Count > _settings.AtrPeriod * 3)
             {
                 _historicalData.RemoveAt(0);
             }
@@ -39,15 +49,32 @@ namespace CryptoTrader.Maui.CoinswitchTrader.Services
             if (_historicalData.Count >= _settings.AtrPeriod)
             {
                 CalculateIndicators();
+
+                // Set initial direction if not set yet
+                if (_direction == 0)
+                {
+                    // Determine initial direction based on price relative to stops
+                    var lastCandle = _historicalData.Last();
+                    _direction = lastCandle.Close > _shortStop ? 1 : lastCandle.Close < _longStop ? -1 : 1;
+                    _isInitialized = true;
+                }
             }
         }
+
         public TradingSignal GetSignal()
         {
-            if (_historicalData.Count < _settings.AtrPeriod + 1)
+            // Ensure we have enough data and initialization has completed
+            if (!_isInitialized || _historicalData.Count < _settings.AtrPeriod + 1)
                 return null;
 
             var candle = _historicalData.Last();
             var previousCandle = _historicalData[_historicalData.Count - 2];
+
+            // Only generate signals if bar confirmation is enabled and we have a closed candle
+            if (_settings.AwaitBarConfirmation && candle.close_time > DateTime.Now)
+            {
+                return null; // Current candle is still forming
+            }
 
             // Calculate new direction
             int newDirection = candle.Close > _shortStopPrev ? 1 : candle.Close < _longStopPrev ? -1 : _direction;
@@ -58,10 +85,11 @@ namespace CryptoTrader.Maui.CoinswitchTrader.Services
                 _direction = newDirection;
                 return new TradingSignal
                 {
-                    Timestamp = candle.Timestamp,
+                    Timestamp = candle.close_time,
                     Type = SignalType.Buy,
                     Price = candle.Close,
-                    Symbol = "" // To be filled by caller
+                    Symbol = "", // To be filled by caller
+                    StopLevel = _longStop  // Add the stop level
                 };
             }
             else if (newDirection == -1 && _direction == 1)
@@ -69,20 +97,23 @@ namespace CryptoTrader.Maui.CoinswitchTrader.Services
                 _direction = newDirection;
                 return new TradingSignal
                 {
-                    Timestamp = candle.Timestamp,
+                    Timestamp = candle.close_time,
                     Type = SignalType.Sell,
                     Price = candle.Close,
-                    Symbol = "" // To be filled by caller
+                    Symbol = "", // To be filled by caller
+                    StopLevel = _shortStop  // Add the stop level
                 };
             }
 
             _direction = newDirection;
             return null;
         }
+
         private void CalculateIndicators()
         {
             // Calculate ATR
             decimal atr = CalculateATR(_settings.AtrPeriod) * (decimal)_settings.AtrMultiplier;
+            if (atr == 0) return; // Avoid division by zero issues
 
             // Calculate long and short stops
             decimal highest = _settings.UseClosePriceForExtremums
@@ -101,18 +132,22 @@ namespace CryptoTrader.Maui.CoinswitchTrader.Services
             _longStop = highest - atr;
             _shortStop = lowest + atr;
 
-            // Apply trailing stop logic
-            var previousCandle = _historicalData[_historicalData.Count - 2];
-            if (previousCandle.Close > _longStopPrev)
+            // Apply trailing stop logic only if we have previous data
+            if (_historicalData.Count > 1)
             {
-                _longStop = Math.Max(_longStop, _longStopPrev);
-            }
+                var previousCandle = _historicalData[_historicalData.Count - 2];
+                if (previousCandle.Close > _longStopPrev)
+                {
+                    _longStop = Math.Max(_longStop, _longStopPrev);
+                }
 
-            if (previousCandle.Close < _shortStopPrev)
-            {
-                _shortStop = Math.Min(_shortStop, _shortStopPrev);
+                if (previousCandle.Close < _shortStopPrev)
+                {
+                    _shortStop = Math.Min(_shortStop, _shortStopPrev);
+                }
             }
         }
+
         private decimal CalculateATR(int period)
         {
             if (_historicalData.Count < period + 1)

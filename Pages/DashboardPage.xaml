@@ -16,6 +16,7 @@
             <!-- Portfolio Summary Section -->
             <Label Text="Portfolio Summary" FontSize="24" FontAttributes="Bold" HorizontalOptions="Start" />
             <Label Text="Total Balance: ₹0" x:Name="BalanceLabel" FontSize="18" HorizontalOptions="Start" />
+            <Label Text="Total Balance: USDT" x:Name="FutureBalanceLabel" FontSize="18" HorizontalOptions="Start" />
 
             <!-- Live Market Data Section -->
             <Label Text="Live Market Data" FontSize="20" FontAttributes="Bold" Margin="0,20,0,5" HorizontalOptions="Start" />

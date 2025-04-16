@@ -4,6 +4,8 @@ using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 using System.Data;
+using System.Net.Http;
+using System.Reflection.Metadata;
 using System.Text;
 
 namespace CoinswitchTrader.Services
@@ -14,22 +16,24 @@ namespace CoinswitchTrader.Services
         private string apiKey;
         private string baseUrl;
         private HttpClient httpClient;
+        private bool _isInitialized = false;
 
         public ApiFurureTradingClient(string secretKey, string apiKey)
         {
             this.secretKey = secretKey;
             this.apiKey = apiKey;
+            _isInitialized = true;
             this.baseUrl = "https://coinswitch.co";
             this.httpClient = new HttpClient();
         }
 
-        public async Task<string> CallApiAsync(string url, HttpMethod method, Dictionary<string, string> headers = null, object payload = null)
+        private async Task<string> CallApiAsync(string url, HttpMethod method, Dictionary<string, string> headers = null, object payload = null)
         {
             const int maxRetries = 1;
             const int retryDelay = 5000; // Delay before retrying on network issues in milliseconds
             const int timeout = 10000; // Timeout for each request in milliseconds
 
-            for (int attempt = 0; attempt < maxRetries; attempt++)
+            for (int attempt = 0; attempt <= maxRetries; attempt++) // Changed to <= so we do maxRetries + 1 attempts
             {
                 try
                 {
@@ -59,7 +63,7 @@ namespace CoinswitchTrader.Services
 
                         // Send the request
                         var response = await httpClient.SendAsync(request, cts.Token);
-                        //Task.Delay(5000).Wait();
+
                         // Ensure success status code or handle rate limiting
                         response.EnsureSuccessStatusCode(); // Throws an exception for HTTP error responses
 
@@ -67,7 +71,6 @@ namespace CoinswitchTrader.Services
 
                         if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
                         {
-                            // Handle rate limiting
                             throw new Exception("Rate limiting encountered.");
                         }
 
@@ -76,54 +79,51 @@ namespace CoinswitchTrader.Services
                 }
                 catch (TaskCanceledException e) when (!e.CancellationToken.IsCancellationRequested)
                 {
-                    //LogMessage($"Request timed out. Retrying in {retryDelay / 1000} seconds. Exception: {e.Message}");
-                    await Task.Delay(retryDelay);
+                    Logger.Log($"Request timed out. Retrying in {retryDelay / 1000} seconds. Exception: {e.Message}");
 
-                    if (attempt == maxRetries - 1)
+                    if (attempt == maxRetries)
                     {
-                        break;
-                        throw new TimeoutException("The request timed out.", e);
+                        throw new TimeoutException("The request timed out after maximum retries.", e);
                     }
 
+                    await Task.Delay(retryDelay);
                 }
                 catch (HttpRequestException e) when (e.Message.Contains("No such host"))
                 {
-                    //LogMessage($"No such host. Retrying in {retryDelay / 1000} seconds. Exception: {e.Message}");
-                    await Task.Delay(retryDelay);
+                    Logger.Log($"No such host. Retrying in {retryDelay / 1000} seconds. Exception: {e.Message}");
 
-                    if (attempt == maxRetries - 1)
+                    if (attempt == maxRetries)
                     {
-                        break;
                         throw new Exception("No such host error after maximum retries.", e);
                     }
 
+                    await Task.Delay(retryDelay);
                 }
                 catch (HttpRequestException e)
                 {
-                    //LogMessage($"Request error: {e.Message}. Retrying in {retryDelay / 1000} seconds.");
-                    await Task.Delay(retryDelay);
+                    Logger.Log($"Request error: {e.Message}. Retrying in {retryDelay / 1000} seconds.");
 
-                    if (attempt == maxRetries - 1)
+                    if (attempt == maxRetries)
                     {
-                        break;
                         throw;
                     }
 
+                    await Task.Delay(retryDelay);
                 }
                 catch (Exception ex)
                 {
-                    //LogMessage($"Unexpected error: {ex.Message}. Retrying in {retryDelay / 1000} seconds. {url}");
-                    await Task.Delay(retryDelay);
+                    Logger.Log($"Unexpected error: {ex.Message}. Retrying in {retryDelay / 1000} seconds. URL: {url}");
 
-                    if (attempt == maxRetries - 1)
+                    if (attempt == maxRetries)
                     {
-                        break;
                         throw new Exception("An unexpected error occurred during API call.", ex);
                     }
 
+                    await Task.Delay(retryDelay);
                 }
             }
 
+            // This line should never be reached with the current implementation
             return null;
         }
         public string SignatureMessage(string method, string url, string epochTime)
@@ -263,7 +263,45 @@ namespace CoinswitchTrader.Services
             }
         }
 
+        private async Task<string> MakeRequestObjectAsync(string method, string endpoint, Dictionary<string, object> queryParams = null, object body = null)
+        {
+            try
+            {
+                // Append query parameters for GET
+                if (method == HttpMethod.Get.Method && queryParams != null && queryParams.Count > 0)
+                {
+                    endpoint += '?' + string.Join("&", queryParams.Select(kv => $"{kv.Key}={kv.Value}"));
+                    endpoint = Uri.UnescapeDataString(endpoint.Replace("+", " "));
+                }
 
+                string epochTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+                string signatureMsg = SignatureMessage(method, endpoint, epochTime);
+                string signature = GetSignatureOfRequest(this.secretKey, signatureMsg);
+
+                if (signature == null)
+                {
+                    return JsonConvert.SerializeObject(new { message = "Please Enter Valid Keys" });
+                }
+
+                string fullUrl = $"{this.baseUrl}{endpoint}"; // Don't redeclare 'url', use 'fullUrl'
+
+                // Create Headers
+                var headers = new Dictionary<string, string>
+        {
+            { "X-AUTH-SIGNATURE", signature },
+            { "X-AUTH-APIKEY", this.apiKey },
+            { "X-REQUEST-ID", "prod-Hamza" },
+            { "X-AUTH-EPOCH", epochTime }
+        };
+
+                // Call API with full URL, method, headers, and body
+                return await CallApiAsync(fullUrl, new HttpMethod(method), headers, body);
+            }
+            catch (Exception ex)
+            {
+                return JsonConvert.SerializeObject(new { error = ex.Message });
+            }
+        }
 
 
         public Dictionary<string, object> RemoveTrailingZeros(Dictionary<string, object> dictionary)
@@ -278,39 +316,48 @@ namespace CoinswitchTrader.Services
             return dictionary;
         }
 
-        public async Task<List<FutureCandleData>> GetKlinesAsync(string symbol, string interval, int limit = 100)
+        public async Task<List<FutureCandleData>> GetKlinesAsync(string symbol, string interval, string exchange, int limit = 100)
         {
             try
             {
-                var parameters = new Dictionary<string, string>
-                {
-                    { "symbol", symbol },
-                    { "interval", interval },
-                    { "limit", limit.ToString() }
-                };
+                var now = DateTimeOffset.Now.ToUnixTimeMilliseconds();         // current time in milliseconds
+                var oneDayAgo = now - (24 * 60 * 60 * 1000);                      // 1 day ago
 
-                var response = await MakeRequestAsync("GET", "/trade/api/v2/futures/klines", parameters);
-                var candlesArray = JsonConvert.DeserializeObject<List<List<object>>>(response);
+                var parameters = new Dictionary<string, object>
+                    {
+                        { "symbol", symbol.ToLower() },           // Example: "btcusdt"
+                        { "exchange", exchange.ToUpper() },       // Example: "EXCHANGE_2"
+                        { "interval", int.Parse(interval) },      // Example: 1, 5, 15 etc. Must be INT not STRING
+                        { "limit", 100 },                         // You want limit = 100
+                        { "start_time", oneDayAgo.ToString() },    // Optional, for historical data
+                        { "end_time", now.ToString() }             // Optional, till now
+                    };
+                var response = await MakeRequestObjectAsync("GET", "/trade/api/v2/futures/klines", parameters);
+                var candlesArray = JsonConvert.DeserializeObject<CandleResponse>(response);
 
                 var candles = new List<FutureCandleData>();
 
-                foreach (var candleData in candlesArray)
+                foreach (var candleData in candlesArray.data)
                 {
-                    var timestamp = DateTimeOffset.FromUnixTimeMilliseconds(Convert.ToInt64(candleData[0])).DateTime;
-                    var open = Convert.ToDecimal(candleData[1]);
-                    var high = Convert.ToDecimal(candleData[2]);
-                    var low = Convert.ToDecimal(candleData[3]);
-                    var close = Convert.ToDecimal(candleData[4]);
-                    var volume = Convert.ToDecimal(candleData[5]);
+                    var timestamp = candleData.close_time;
+                    var open = Convert.ToDecimal(candleData.Open);
+                    var high = Convert.ToDecimal(candleData.High);
+                    var low = Convert.ToDecimal(candleData.Low);
+                    var close = Convert.ToDecimal(candleData.Close);
+                    var volume = Convert.ToDecimal(candleData.Volume);
+                    var symbolData = candleData.symbol;
+                    var start = candleData.start_time;
 
                     candles.Add(new FutureCandleData
                     {
-                        Timestamp = timestamp,
+                        close_time = timestamp,
                         Open = open,
                         High = high,
                         Low = low,
                         Close = close,
-                        Volume = volume
+                        Volume = volume,
+                        symbol = symbolData,
+                        start_time = start
                     });
                 }
 
@@ -323,12 +370,84 @@ namespace CoinswitchTrader.Services
             }
         }
 
+        public async Task<List<FuturePosition>> GetOpenPositionsAsync(string symbol, string exchnage)
+        {
+            try
+            {
+                var payload = new Dictionary<string, string>
+            {
+                { "symbol", symbol },
+                { "exchange", exchnage }
+            };
+                var response = await GetFuturesPositionsAsync(payload);
+
+                var result = JsonConvert.DeserializeObject<PositionResponse>(response);
+
+                var position = new List<FuturePosition>();
+                if(result == null || result.data == null)
+                {
+                    return position;
+                }
+                foreach (var item in result.data)
+                {
+                    var exchange = item.Exchange;
+                    var positionId = item.PositionId;
+                    var symbol1 = item.Symbol;
+                    var positionSide = item.PositionSide;
+                    var leverage = item.Leverage;
+                    var positionSize = item.PositionSize;
+                    var positionValue = item.PositionValue;
+                    var positionMargin = item.PositionMargin;
+                    var maintMargin = item.MaintMargin;
+                    var avgEntryPrice = item.AvgEntryPrice;
+                    var markPrice = item.MarkPrice;
+                    var lastPrice = item.LastPrice;
+                    var unrealisedPnl = item.UnrealisedPnl;
+                    var liquidationPrice = item.LiquidationPrice;
+                    var status = item.Status;
+                    var createdAt = item.CreatedAt;
+                    var updatedAt = item.UpdatedAt;
+
+                    position.Add(new FuturePosition
+                    {
+                        Exchange = exchange,
+                        PositionId = positionId,
+                        Symbol = symbol1,
+                        PositionSide = positionSide,
+                        Leverage = leverage,
+                        PositionSize = positionSize,
+                        PositionValue = positionValue,
+                        PositionMargin = positionMargin,
+                        MaintMargin = maintMargin,
+                        AvgEntryPrice = avgEntryPrice,
+                        MarkPrice = markPrice,
+                        LastPrice = lastPrice,
+                        UnrealisedPnl = unrealisedPnl,
+                        LiquidationPrice = liquidationPrice,
+                        Status = status,
+                        CreatedAt = createdAt,
+                        UpdatedAt = updatedAt,
+                    });
+                }
+                return position;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting klines: {ex.Message}");
+                return new List<FuturePosition>();
+            }
+        }
+
+
+
+
+
         // ================= FUTURES APIs =================
 
         // 1. Get Current Leverage
-        public Task<string> GetLeverageAsync(Dictionary<string, string> paramsDict = null)
+        public async Task<string> GetLeverageAsync(Dictionary<string, string> paramsDict = null)
         {
-            return MakeRequestAsync("GET", "/trade/api/v2/futures/leverage", paramsDict);
+            return await MakeRequestAsync("GET", "/trade/api/v2/futures/leverage", paramsDict);
         }
 
         // 2. Change Leverage
@@ -403,11 +522,32 @@ namespace CoinswitchTrader.Services
             return MakeRequestAsync("GET", "/trade/api/v2/futures/insurance_fund/history", paramsDict);
         }
 
+        // 14. Get Futures Account Info
+        public Task<string> GetFuturesAccountInfoAsync(Dictionary<string, string> paramsDict = null)
+        {
+            return MakeRequestAsync("GET", "/trade/api/v2/futures/wallet_balance", paramsDict);
+        }
+
+        // 15. Get Tickers
+        public Task<string> GetLatestPriceAsync(Dictionary<string, string> paramsDict = null)
+        {
+            return MakeRequestAsync("GET", "/trade/api/v2/futures/ticker", paramsDict);
+        }
+
         public string FormatJson(string json)
         {
             var parsedJson = JsonConvert.DeserializeObject(json);
             return JsonConvert.SerializeObject(parsedJson, Formatting.Indented);
         }
+
+        private void CheckInitialized()
+        {
+            if (!_isInitialized)
+            {
+                throw new InvalidOperationException("API client is not initialized. Call Initialize method first.");
+            }
+        }
+
 
     }
 }

@@ -295,7 +295,6 @@ namespace CoinswitchTrader.Services
             var json = JsonConvert.DeserializeObject<JObject>(response);
             var inrData = json["data"]?.FirstOrDefault(x => x["currency"]?.ToString() == currency.ToUpper());
             return inrData != null ? decimal.Parse(inrData["main_balance"].ToString()) : 0;
-
         }
 
         public async Task<JObject> GetTickerAsync(string symbol, string exchange)

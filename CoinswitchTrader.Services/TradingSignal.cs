@@ -12,5 +12,6 @@ namespace CryptoTrader.Maui.CoinswitchTrader.Services
         public Enums.SignalType Type { get; set; }
         public decimal Price { get; set; }
         public string Symbol { get; set; }
+        public decimal StopLevel { get; set; }
     }
 }

@@ -23,6 +23,7 @@ public partial class DashboardPage : ContentPage
     private readonly TradingService _tradingService;
     private readonly SettingsService _settingsService;
     private readonly DashboardServices _dashboardService;
+    private readonly FutureTradingService _futureTradingService;
     public DashboardPage()
     {
         InitializeComponent();
@@ -30,7 +31,9 @@ public partial class DashboardPage : ContentPage
         _settingsService = new SettingsService();
         _tradingService = new TradingService(_settingsService.SecretKey, _settingsService.ApiKey, _settingsService);
         _dashboardService = new DashboardServices(_tradingService, _settingsService);
+        _futureTradingService = new FutureTradingService();
         CancelOrderCommand = new Command<OrderModel>(OnCancelOrder);
+       
     }
     private void StartAutoRefresh()
     {
@@ -60,13 +63,14 @@ public partial class DashboardPage : ContentPage
 
             var order = await FetchOpenOrdersAsync();
             var InrBalance = await _tradingService.GetBalanceCurrencyAsync("INR");
+            var usdtBalance = await _futureTradingService.GetFutureBalance("USDT");
             if (order != null)
             {
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
                     OrdersCollectionView.ItemsSource = order;
                     BalanceLabel.Text = $"INR Balance: {InrBalance}";
-
+                    FutureBalanceLabel.Text = $"USDT Balance: {usdtBalance}";
                 });
             }
 
